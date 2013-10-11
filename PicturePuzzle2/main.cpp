@@ -157,33 +157,9 @@ void CleanD3D()
     comDeviceContext->Release();
 }
 
-
-// this is the function used to render a single frame
-void RenderFrame(void)
-{
-    // clear the back buffer to a deep blue
-    comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
-
-	// select which vertex buffer to display
-    UINT stride = sizeof(VERTEX_COLOR);
-    UINT offset = 0;
-    comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
-
-    // select which primtive type we are using
-	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    // draw the vertex buffer to the back buffer
-    comDeviceContext->Draw(3, 0); // draw 3 vertices, starting from vertex 0
-
-    // switch the back buffer and the front buffer
-    comSwapChain->Present(0, 0);
-}
-
 // this is the function that creates the shape to render
 void InitBuffers()
 {
-	const int vertexCount = 3, indexCount = 3;
-
     // create a triangle using the VERTEX struct
     VERTEX_COLOR OurVertices[vertexCount] =
     {
@@ -251,7 +227,60 @@ void InitPipeline()
     };
 
     comDevice->CreateInputLayout(myInputLayout, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &comInputLayout);
-    comDeviceContext->IASetInputLayout(comInputLayout);
+    //comDeviceContext->IASetInputLayout(comInputLayout); //moved to render function
 
 	VS->Release(); PS->Release();
+
+	D3D11_SAMPLER_DESC samplerDesc;
+	// Create a texture sampler state description.
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.MipLODBias = 0.0f;
+    samplerDesc.MaxAnisotropy = 1;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+    HRESULT result = comDevice->CreateSamplerState(&samplerDesc, &comSamplerState);
+}
+
+// this is the function used to render a single frame
+void RenderFrame(void)
+{
+	// Set shader texture resource in the pixel shader.
+	//deviceContext->PSSetShaderResources(0, 1, &texture); //APPLYING TEXTURE
+	// Set the vertex input layout.
+	comDeviceContext->IASetInputLayout(comInputLayout);
+
+	// clear the back buffer to a deep blue
+    comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
+
+	/*comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
+	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
+	comDeviceContext->DrawIndexed(indexCount, 0, 0);
+	*/
+	
+
+
+	// select which vertex buffer to display
+    UINT stride = sizeof(VERTEX_COLOR);
+    UINT offset = 0;
+    comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
+
+    // select which primtive type we are using
+	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // draw the vertex buffer to the back buffer
+    comDeviceContext->Draw(3, 0); // draw 3 vertices, starting from vertex 0
+	
+    // switch the back buffer and the front buffer
+    comSwapChain->Present(0, 0); // Present as fast as possible.
+	
 }

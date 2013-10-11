@@ -29,6 +29,7 @@ ID3D11InputLayout		*comInputLayout;
 
 ID3D11Resource				*comTexture = NULL;
 ID3D11ShaderResourceView	*comTextureShaderView = NULL; // Объект текстуры
+ID3D11SamplerState			* comSamplerState;
 
 // function prototypes
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D
@@ -47,3 +48,5 @@ struct VERTEX_COLOR
     D3DXCOLOR Color;    // color
 	//D3DXVECTOR2 texture;
 };
+
+const int vertexCount = 3, indexCount = 3;
