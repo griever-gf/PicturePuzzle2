@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <windowsx.h>
+#include "WICTextureLoader.h"
 
 #include <d3d11.h>
 #include <d3dx11.h>
@@ -26,7 +27,8 @@ ID3D11Buffer			*comVertexBuffer;
 ID3D11Buffer			*comIndexBuffer; 
 ID3D11InputLayout		*comInputLayout;
 
-ID3D11ShaderResourceView* m_texture;//D3DX11CreateShaderResourceViewFromFileW
+ID3D11Resource				*comTexture = NULL;
+ID3D11ShaderResourceView	*comTextureShaderView = NULL; // Объект текстуры
 
 // function prototypes
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D

@@ -80,9 +80,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
+    <ClInclude Include="WICTextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="WICTextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders.hlsl" />

@@ -137,6 +137,8 @@ void InitD3D(HWND hWnd)
 	InitPipeline();				//load & init shaders
     InitBuffers();				//creating render shape
 	//сначала инициализируем буфферы, а уже потом загружаем текстуру
+	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"levsha.jpg", NULL, NULL, &comTextureShaderView, NULL);
+	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
 }
 
 // this is the function that cleans up Direct3D and COM
