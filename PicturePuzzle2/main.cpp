@@ -208,8 +208,10 @@ void InitPipeline()
 {
     // load and compile the two shaders
     ID3D10Blob *VS, *PS;
-    HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "VShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-    HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "PShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
+    //HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "VShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+    //HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "PShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
+	HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+    HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorPixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 
     // encapsulate both shaders into shader objects
     comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &comVertexShader);
@@ -262,24 +264,24 @@ void RenderFrame(void)
 	// clear the back buffer to a deep blue
     comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
 
-	/*comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
-	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
-	comDeviceContext->DrawIndexed(indexCount, 0, 0);
-	*/
-	
-
-
 	// select which vertex buffer to display
     UINT stride = sizeof(VERTEX_COLOR);
     UINT offset = 0;
     comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
 
-    // select which primtive type we are using
+    // Set the index buffer to active in the input assembler so it can be rendered.
+	comDeviceContext->IASetIndexBuffer(comIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
+	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
+
     // draw the vertex buffer to the back buffer
-    comDeviceContext->Draw(3, 0); // draw 3 vertices, starting from vertex 0
-	
+	comDeviceContext->DrawIndexed(indexCount, 0, -1);
+    //comDeviceContext->Draw(indexCount, 0); // draw 3 vertices, starting from vertex 0
+
     // switch the back buffer and the front buffer
     comSwapChain->Present(0, 0); // Present as fast as possible.
 	
