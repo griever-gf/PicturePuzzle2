@@ -23,7 +23,10 @@ ID3D11RenderTargetView	*comBackBuffer;			// the pointer to our back buffer
 ID3D11VertexShader		*comVertexShader;    // the vertex shader
 ID3D11PixelShader		*comPixelShader;     // the pixel shader
 ID3D11Buffer			*comVertexBuffer; 
+ID3D11Buffer			*comIndexBuffer; 
 ID3D11InputLayout		*comInputLayout;
+
+ID3D11ShaderResourceView* m_texture;//D3DX11CreateShaderResourceViewFromFileW
 
 // function prototypes
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D
@@ -35,8 +38,10 @@ void InitPipeline(void);
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-struct VERTEX
+struct VERTEX_COLOR
 {
-      FLOAT X, Y, Z;      // position
-      D3DXCOLOR Color;    // color
+      //FLOAT X, Y, Z;      // position
+	D3DXVECTOR3 position;
+    D3DXCOLOR Color;    // color
+	//D3DXVECTOR2 texture;
 };

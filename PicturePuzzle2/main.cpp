@@ -147,6 +147,7 @@ void CleanD3D()
     comVertexShader->Release();
     comPixelShader->Release();
     comVertexBuffer->Release();
+	comIndexBuffer->Release();
     comSwapChain->Release();
 	comBackBuffer->Release();
     comDevice->Release();
@@ -161,7 +162,7 @@ void RenderFrame(void)
     comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
 
 	// select which vertex buffer to display
-    UINT stride = sizeof(VERTEX);
+    UINT stride = sizeof(VERTEX_COLOR);
     UINT offset = 0;
     comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
 
@@ -178,32 +179,49 @@ void RenderFrame(void)
 // this is the function that creates the shape to render
 void InitGraphics()
 {
-    // create a triangle using the VERTEX struct
-    VERTEX OurVertices[] =
-    {
-        {0.0f, 0.5f, 0.0f, D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f)},
-        {0.45f, -0.5, 0.0f, D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)},
-        {-0.45f, -0.5f, 0.0f, D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f)}
-    };
+	//сначала инициализируем буфферы, а уже потом загружаем текстуру
+	const int vertexCount = 3, indexCount = 3;
 
+    // create a triangle using the VERTEX struct
+    VERTEX_COLOR OurVertices[vertexCount] =
+    {
+        {D3DXVECTOR3(0.0f, 0.5f, 0.0f), D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f)},
+        {D3DXVECTOR3(0.45f, -0.5, 0.0f), D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)},
+        {D3DXVECTOR3(-0.45f, -0.5f, 0.0f), D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f)}
+    };
+	unsigned long indices [indexCount] = { 1, 2, 3 };
 
     // create the vertex buffer
-    D3D11_BUFFER_DESC bd;
-    ZeroMemory(&bd, sizeof(bd));
+    D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
+    ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc)); ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+	D3D11_SUBRESOURCE_DATA vertexData, indexData;
 
-    bd.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-    bd.ByteWidth = sizeof(VERTEX) * 3;             // size is the VERTEX struct * 3
-    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
-    bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
+    vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
+    vertexBufferDesc.ByteWidth = sizeof(VERTEX_COLOR) * vertexCount;             // size is the VERTEX struct * 3
+    vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
+    vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
 
-    comDevice->CreateBuffer(&bd, NULL, &comVertexBuffer);       // create the buffer
+	vertexData.pSysMem = OurVertices;
+	vertexData.SysMemPitch = 0;
+	vertexData.SysMemSlicePitch = 0;
 
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &comVertexBuffer);       // create the buffer filled with data
 
-    // copy the vertices into the buffer
-    D3D11_MAPPED_SUBRESOURCE ms;
-    comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &ms);    // map the buffer
-    memcpy(ms.pData, OurVertices, sizeof(OurVertices));                 // copy the data
-    comDeviceContext->Unmap(comVertexBuffer, NULL);                                      // unmap the buffer
+	// Set up the description of the static index buffer.
+    indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    indexBufferDesc.ByteWidth = sizeof(unsigned long) * indexCount;
+    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    indexBufferDesc.CPUAccessFlags = 0;
+    indexBufferDesc.MiscFlags = 0;
+	indexBufferDesc.StructureByteStride = 0;
+
+	// Give the subresource structure a pointer to the index data.
+    indexData.pSysMem = indices;
+	indexData.SysMemPitch = 0;
+	indexData.SysMemSlicePitch = 0;
+
+	// Create the index buffer.
+	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &comIndexBuffer);
 }
 
 
@@ -212,7 +230,7 @@ void InitPipeline()
 {
     // load and compile the two shaders
     ID3D10Blob *VS, *PS;
-    HRESULT hhh = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "VShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+    HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "VShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
     HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "PShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 
     // encapsulate both shaders into shader objects
@@ -224,12 +242,14 @@ void InitPipeline()
     comDeviceContext->PSSetShader(comPixelShader, 0, 0);
 
     // create the input layout object
-    D3D11_INPUT_ELEMENT_DESC ied[] =
+    D3D11_INPUT_ELEMENT_DESC myInputLayout[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
-    comDevice->CreateInputLayout(ied, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &comInputLayout);
+    comDevice->CreateInputLayout(myInputLayout, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &comInputLayout);
     comDeviceContext->IASetInputLayout(comInputLayout);
+
+	VS->Release(); PS->Release();
 }
