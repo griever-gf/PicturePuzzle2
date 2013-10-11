@@ -134,8 +134,9 @@ void InitD3D(HWND hWnd)
 	//and the second parameter is the address of a list of pointers to the viewport structs.
     comDeviceContext->RSSetViewports(1, &tempViewport);
 
-	InitPipeline();
-    InitGraphics();
+	InitPipeline();				//load & init shaders
+    InitBuffers();				//creating render shape
+	//сначала инициализируем буфферы, а уже потом загружаем текстуру
 }
 
 // this is the function that cleans up Direct3D and COM
@@ -177,9 +178,8 @@ void RenderFrame(void)
 }
 
 // this is the function that creates the shape to render
-void InitGraphics()
+void InitBuffers()
 {
-	//сначала инициализируем буфферы, а уже потом загружаем текстуру
 	const int vertexCount = 3, indexCount = 3;
 
     // create a triangle using the VERTEX struct

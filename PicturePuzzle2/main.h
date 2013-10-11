@@ -32,8 +32,8 @@ ID3D11ShaderResourceView* m_texture;//D3DX11CreateShaderResourceViewFromFileW
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D
 void RenderFrame(void);     // renders a single frame
 void CleanD3D(void);         // closes Direct3D and releases memory
-void InitGraphics(void);
 void InitPipeline(void);
+void InitBuffers(void);
 
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
