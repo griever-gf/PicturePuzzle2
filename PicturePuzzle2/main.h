@@ -29,7 +29,7 @@ ID3D11InputLayout		*comInputLayout;
 
 ID3D11Resource				*comTexture = NULL;
 ID3D11ShaderResourceView	*comTextureShaderView = NULL; // Объект текстуры
-ID3D11SamplerState			* comSamplerState;
+ID3D11SamplerState			*comSamplerState;
 
 // function prototypes
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D
@@ -41,12 +41,19 @@ void InitBuffers(void);
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+/*
 struct VERTEX_COLOR
 {
       //FLOAT X, Y, Z;      // position
 	D3DXVECTOR3 position;
     D3DXCOLOR Color;    // color
 	//D3DXVECTOR2 texture;
+};*/
+
+struct VERTEX_TEXTURE
+{
+	D3DXVECTOR3 position;
+	D3DXVECTOR2 texture;
 };
 
 const int vertexCount = 3, indexCount = 3;

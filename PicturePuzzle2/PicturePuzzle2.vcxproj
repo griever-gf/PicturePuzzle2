@@ -88,6 +88,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders.hlsl" />
+    <None Include="shaders_2d.hlsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -137,7 +137,7 @@ void InitD3D(HWND hWnd)
 	InitPipeline();				//load & init shaders
     InitBuffers();				//creating render shape
 	//сначала инициализируем буфферы, а уже потом загружаем текстуру
-	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"levsha.jpg", NULL, NULL, &comTextureShaderView, NULL);
+	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"seafloor.dds", NULL, NULL, &comTextureShaderView, NULL);
 	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
 }
 
@@ -160,12 +160,22 @@ void CleanD3D()
 // this is the function that creates the shape to render
 void InitBuffers()
 {
+	comVertexBuffer = NULL;
+	comIndexBuffer = NULL; 
+	comTexture = NULL;
+	comTextureShaderView = NULL;
     // create a triangle using the VERTEX struct
-    VERTEX_COLOR OurVertices[vertexCount] =
+    /*VERTEX_COLOR OurVertices[vertexCount] =
     {
         {D3DXVECTOR3(0.0f, 0.5f, 0.0f), D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f)},
         {D3DXVECTOR3(0.45f, -0.5, 0.0f), D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)},
         {D3DXVECTOR3(-0.45f, -0.5f, 0.0f), D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f)}
+    };*/
+	VERTEX_TEXTURE RectangleVertices[vertexCount] =
+    {
+        {D3DXVECTOR3(0.0f, 0.5f, 0.0f),  D3DXVECTOR2(0.0f, 1.0f)},
+        {D3DXVECTOR3(0.45f, -0.5, 0.0f),  D3DXVECTOR2(0.5f, 0.0f)},
+        {D3DXVECTOR3(-0.45f, -0.5f, 0.0f), D3DXVECTOR2(1.0f, 1.0f)}
     };
 	unsigned long indices [indexCount] = { 1, 2, 3 };
 
@@ -175,11 +185,11 @@ void InitBuffers()
 	D3D11_SUBRESOURCE_DATA vertexData, indexData;
 
     vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // write access access by CPU and GPU
-    vertexBufferDesc.ByteWidth = sizeof(VERTEX_COLOR) * vertexCount;             // size is the VERTEX struct * 3
+    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * vertexCount;             // size is the VERTEX struct * 3
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
     vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
 
-	vertexData.pSysMem = OurVertices;
+	vertexData.pSysMem = RectangleVertices;
 	vertexData.SysMemPitch = 0;
 	vertexData.SysMemSlicePitch = 0;
 
@@ -210,8 +220,10 @@ void InitPipeline()
     ID3D10Blob *VS, *PS;
     //HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "VShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
     //HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "PShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
-	HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-    HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorPixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
+	//HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+    //HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorPixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
+	HRESULT h1 = D3DX11CompileFromFile(L"shaders_2d.hlsl", 0, 0, "TextureVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+    HRESULT h2 = D3DX11CompileFromFile(L"shaders_2d.hlsl", 0, 0, "TexturePixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 
     // encapsulate both shaders into shader objects
     comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &comVertexShader);
@@ -225,7 +237,7 @@ void InitPipeline()
     D3D11_INPUT_ELEMENT_DESC myInputLayout[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
     comDevice->CreateInputLayout(myInputLayout, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &comInputLayout);
@@ -235,7 +247,8 @@ void InitPipeline()
 
 	D3D11_SAMPLER_DESC samplerDesc;
 	// Create a texture sampler state description.
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    //samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -257,7 +270,7 @@ void InitPipeline()
 void RenderFrame(void)
 {
 	// Set shader texture resource in the pixel shader.
-	//deviceContext->PSSetShaderResources(0, 1, &texture); //APPLYING TEXTURE
+	comDeviceContext->PSSetShaderResources(0, 1, &comTextureShaderView); //APPLYING TEXTURE
 	// Set the vertex input layout.
 	comDeviceContext->IASetInputLayout(comInputLayout);
 
@@ -265,7 +278,7 @@ void RenderFrame(void)
     comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
 
 	// select which vertex buffer to display
-    UINT stride = sizeof(VERTEX_COLOR);
+    UINT stride = sizeof(VERTEX_TEXTURE);
     UINT offset = 0;
     comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
 
@@ -277,6 +290,9 @@ void RenderFrame(void)
 
 	comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
 	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
+
+	// Set the sampler state in the pixel shader.
+	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);
 
     // draw the vertex buffer to the back buffer
 	comDeviceContext->DrawIndexed(indexCount, 0, -1);
