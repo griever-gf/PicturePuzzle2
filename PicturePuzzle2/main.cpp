@@ -175,21 +175,21 @@ void InitBuffers()
 	comTexture = NULL;
 	comTextureShaderView = NULL;
 
-	D3DXVECTOR3 ScreenCoordsArray[vertexCount];
-	D3DXVECTOR2 TextCoordsArray[vertexCount], StandardTextCoordsArray[vertexCount];
+	D3DXVECTOR3 ScreenCoordsArray[vertexCount/4][4];
+	D3DXVECTOR2 TextCoordsArray[vertexCount/4][4], StandardTextCoordsArray[vertexCount];
 	unsigned long indices[indexCount];
 	for (int i = 0; i < numRows; i++)
 	{
 		for (int j = 0; j < numColumns; j++)
 		{
-			ScreenCoordsArray[(i*numColumns+j)*4  ] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
-			ScreenCoordsArray[(i*numColumns+j)*4+1] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
-			ScreenCoordsArray[(i*numColumns+j)*4+2] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
-			ScreenCoordsArray[(i*numColumns+j)*4+3] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
-			TextCoordsArray[(i*numColumns+j)*4  ] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*(i+1));
-			TextCoordsArray[(i*numColumns+j)*4+1] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*i    );
-			TextCoordsArray[(i*numColumns+j)*4+2] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*i    );
-			TextCoordsArray[(i*numColumns+j)*4+3] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*(i+1));
+			ScreenCoordsArray[(i*numColumns+j)][0] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
+			ScreenCoordsArray[(i*numColumns+j)][1] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*numColumns+j)][2] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*numColumns+j)][3]= D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
+			TextCoordsArray[(i*numColumns+j)][0] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*(i+1));
+			TextCoordsArray[(i*numColumns+j)][1] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*i    );
+			TextCoordsArray[(i*numColumns+j)][2] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*i    );
+			TextCoordsArray[(i*numColumns+j)][3] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*(i+1));
 			indices[(i*numColumns+j)*6  ] = (i*numColumns+j)*4;
 			indices[(i*numColumns+j)*6+1] = (i*numColumns+j)*4+1;
 			indices[(i*numColumns+j)*6+2] = (i*numColumns+j)*4+3;
@@ -198,19 +198,26 @@ void InitBuffers()
 			indices[(i*numColumns+j)*6+5] = (i*numColumns+j)*4+2;
 		}
 	}
-
-	// obtain a time-based seed:
-  //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  //std::shuffle (TextCoordsArray.begin(), TextCoordsArray.end(), std::default_random_engine(seed));
-
 	srand (time(NULL));
-   std::random_shuffle ( &TextCoordsArray[0], &TextCoordsArray[vertexCount-1]);
-
+	// shuffle
+	D3DXVECTOR2 t1, t2;
+    for(int i = 0; i < 100; i++){ // 100 is just a big number
+        for(int k=0;k<(vertexCount/4);k++){
+            int r2=rand()%(vertexCount/4); //# of rows
+            for(int m=0;m<4;m++){
+                t1=TextCoordsArray[k][m];
+                t2=TextCoordsArray[r2][m];
+                TextCoordsArray[r2][m]=t1;
+                TextCoordsArray[k][m]=t2;
+            }
+        }
+    }
 	VERTEX_TEXTURE RectangleVertices[vertexCount];
-	for (int i = 0; i < vertexCount; i++)
+	for (int i = 0; i < vertexCount/4; i++)
+		for (int j = 0; j < 4; j++)
 	{
-		RectangleVertices[i].position = ScreenCoordsArray[i];
-		RectangleVertices[i].texture = TextCoordsArray[i];
+		RectangleVertices[i*4+j].position = ScreenCoordsArray[i][j];
+		RectangleVertices[i*4+j].texture = TextCoordsArray[i][j];
 	}
 
 	/*VERTEX_TEXTURE RectangleVertices[vertexCount] =
