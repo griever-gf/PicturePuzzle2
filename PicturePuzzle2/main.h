@@ -48,4 +48,12 @@ struct VERTEX_TEXTURE
 	D3DXVECTOR2 texture;
 };
 
-const int vertexCount = 4, indexCount = 6;
+//const int vertexCount = 4, indexCount = 6;
+
+const int numRows = 5, numColumns = 5;
+
+//const int vertexCount = (numRows+1)*(numColumns+1);
+const int vertexCount = numRows*numColumns*4;
+const int indexCount = numRows*numColumns*6;
+
+bool isFirstClick = false, isGameFinished = false;

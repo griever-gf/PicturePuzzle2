@@ -83,6 +83,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             } break;
 			
 		case WM_LBUTTONDOWN: //on mouse click
+			isFirstClick != isFirstClick; 
 			WStrStream << "x:" << GET_X_LPARAM(lParam) << ",y:" << GET_Y_LPARAM(lParam);
 			MessageBox(hWnd,WStrStream.str().c_str(),L"mouse coords",MB_OK);
 			break;
@@ -144,8 +145,9 @@ void InitD3D(HWND hWnd)
     InitBuffers();				//creating render shape
 	//сначала инициализируем буфферы, а уже потом загружаем текстуру
 	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"seafloor.dds", NULL, NULL, &comTextureShaderView, NULL);
-	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
+	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
 	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"internets.png", &comTexture, &comTextureShaderView, 2048);
+	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"beyond.bmp", &comTexture, &comTextureShaderView, 2048);
 }
 
 // this is the function that cleans up Direct3D and COM
@@ -172,14 +174,44 @@ void InitBuffers()
 	comTexture = NULL;
 	comTextureShaderView = NULL;
 
-	VERTEX_TEXTURE RectangleVertices[vertexCount] =
+	D3DXVECTOR3 ScreenCoordsArray[vertexCount];
+	D3DXVECTOR2 TextCoordsArray[vertexCount], StandardTextCoordsArray[vertexCount];
+	unsigned long indices[indexCount];
+	for (int i = 0; i < numRows; i++)
+	{
+		for (int j = 0; j < numColumns; j++)
+		{
+			ScreenCoordsArray[(i*numColumns+j)*4  ] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
+			ScreenCoordsArray[(i*numColumns+j)*4+1] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*numColumns+j)*4+2] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*numColumns+j)*4+3] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
+			TextCoordsArray[(i*numColumns+j)*4  ] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*(i+1));
+			TextCoordsArray[(i*numColumns+j)*4+1] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*i    );
+			TextCoordsArray[(i*numColumns+j)*4+2] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*i    );
+			TextCoordsArray[(i*numColumns+j)*4+3] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*(i+1));
+			indices[(i*numColumns+j)*6  ] = (i*numColumns+j)*4;
+			indices[(i*numColumns+j)*6+1] = (i*numColumns+j)*4+1;
+			indices[(i*numColumns+j)*6+2] = (i*numColumns+j)*4+3;
+			indices[(i*numColumns+j)*6+3] = (i*numColumns+j)*4+3;
+			indices[(i*numColumns+j)*6+4] = (i*numColumns+j)*4+1;
+			indices[(i*numColumns+j)*6+5] = (i*numColumns+j)*4+2;
+		}
+	}
+	VERTEX_TEXTURE RectangleVertices[vertexCount];
+	for (int i = 0; i < vertexCount; i++)
+	{
+		RectangleVertices[i].position = ScreenCoordsArray[i];
+		RectangleVertices[i].texture = TextCoordsArray[i];
+	}
+
+	/*VERTEX_TEXTURE RectangleVertices[vertexCount] =
     {
         {D3DXVECTOR3(-1.0f, -1.0f, 0.0f), D3DXVECTOR2(1.0f, 1.0f)},
         {D3DXVECTOR3(-1.0f, 1.0f, 0.0f),  D3DXVECTOR2(1.0f, 0.0f)},
 		{D3DXVECTOR3(1.0f, 1.0f, 0.0f),   D3DXVECTOR2(0.0f, 0.0f)},
         {D3DXVECTOR3(1.0f, -1.0f, 0.0f),  D3DXVECTOR2(0.0f, 1.0f)}
     };
-	unsigned long indices[] = { 0, 1, 3, 3, 1, 2 }; // Индексы соответствуют обходу вершин по часовой стрелке.
+	unsigned long indices[] = { 0, 1, 3, 3, 1, 2 }; // Индексы соответствуют обходу вершин по часовой стрелке.*/
 
     // create the vertex buffer
     D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
