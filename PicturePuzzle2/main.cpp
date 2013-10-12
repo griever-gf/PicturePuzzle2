@@ -83,9 +83,21 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             } break;
 			
 		case WM_LBUTTONDOWN: //on mouse click
-			isFirstClick != isFirstClick; 
-			WStrStream << "x:" << GET_X_LPARAM(lParam) << ",y:" << GET_Y_LPARAM(lParam);
-			MessageBox(hWnd,WStrStream.str().c_str(),L"mouse coords",MB_OK);
+			isFirstClick != isFirstClick;
+
+			RECT rect;
+			if(GetWindowRect(hWnd, &rect))
+			{
+			  int width = rect.right - rect.left;
+			  int height = rect.bottom - rect.top;
+			  int x = GET_X_LPARAM(lParam) / (width/numRows);
+			  int y = GET_Y_LPARAM(lParam) / (height/numColumns);
+			  WStrStream << "x:" << x << ",y:" << y;
+			  MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+			}
+			
+			
+			
 			break;
     }
 
