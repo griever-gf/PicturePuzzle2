@@ -139,6 +139,7 @@ void InitD3D(HWND hWnd)
 	//сначала инициализируем буфферы, а уже потом загружаем текстуру
 	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"seafloor.dds", NULL, NULL, &comTextureShaderView, NULL);
 	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
+	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"internets.png", &comTexture, &comTextureShaderView, 2048);
 }
 
 // this is the function that cleans up Direct3D and COM
@@ -173,11 +174,12 @@ void InitBuffers()
     };*/
 	VERTEX_TEXTURE RectangleVertices[vertexCount] =
     {
-        {D3DXVECTOR3(0.0f, 0.5f, 0.0f),  D3DXVECTOR2(0.0f, 1.0f)},
-        {D3DXVECTOR3(0.45f, -0.5, 0.0f),  D3DXVECTOR2(0.5f, 0.0f)},
-        {D3DXVECTOR3(-0.45f, -0.5f, 0.0f), D3DXVECTOR2(1.0f, 1.0f)}
+        {D3DXVECTOR3(-1.0f, -1.0f, 0.0f), D3DXVECTOR2(1.0f, 1.0f)},
+        {D3DXVECTOR3(-1.0f, 1.0f, 0.0f),  D3DXVECTOR2(1.0f, 0.0f)},
+		{D3DXVECTOR3(1.0f, 1.0f, 0.0f),   D3DXVECTOR2(0.0f, 0.0f)},
+        {D3DXVECTOR3(1.0f, -1.0f, 0.0f),  D3DXVECTOR2(0.0f, 1.0f)}
     };
-	unsigned long indices [indexCount] = { 1, 2, 3 };
+	unsigned long indices[] = { 0, 1, 3, 3, 1, 2 }; // Индексы соответствуют обходу вершин по часовой стрелке.
 
     // create the vertex buffer
     D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
@@ -218,10 +220,6 @@ void InitPipeline()
 {
     // load and compile the two shaders
     ID3D10Blob *VS, *PS;
-    //HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "VShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-    //HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "PShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
-	//HRESULT h1 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-    //HRESULT h2 = D3DX11CompileFromFile(L"shaders.hlsl", 0, 0, "ColorPixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 	HRESULT h1 = D3DX11CompileFromFile(L"shaders_2d.hlsl", 0, 0, "TextureVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
     HRESULT h2 = D3DX11CompileFromFile(L"shaders_2d.hlsl", 0, 0, "TexturePixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 
@@ -295,7 +293,7 @@ void RenderFrame(void)
 	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);
 
     // draw the vertex buffer to the back buffer
-	comDeviceContext->DrawIndexed(indexCount, 0, -1);
+	comDeviceContext->DrawIndexed(indexCount, 0, 0);
     //comDeviceContext->Draw(indexCount, 0); // draw 3 vertices, starting from vertex 0
 
     // switch the back buffer and the front buffer

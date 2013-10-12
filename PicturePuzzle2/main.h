@@ -56,4 +56,4 @@ struct VERTEX_TEXTURE
 	D3DXVECTOR2 texture;
 };
 
-const int vertexCount = 3, indexCount = 3;
+const int vertexCount = 4, indexCount = 6;
