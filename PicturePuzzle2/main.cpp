@@ -70,6 +70,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // this is the main message handler for the program
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	std::wstringstream WStrStream;
     // sort through and find what code to run for the message given
     switch(message)
     {
@@ -80,6 +81,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
                 PostQuitMessage(0);
                 return 0;
             } break;
+			
+		case WM_LBUTTONDOWN: //on mouse click
+			WStrStream << "x:" << GET_X_LPARAM(lParam) << ",y:" << GET_Y_LPARAM(lParam);
+			MessageBox(hWnd,WStrStream.str().c_str(),L"mouse coords",MB_OK);
+			break;
     }
 
     // Handle any messages the switch statement didn't
@@ -165,13 +171,7 @@ void InitBuffers()
 	comIndexBuffer = NULL; 
 	comTexture = NULL;
 	comTextureShaderView = NULL;
-    // create a triangle using the VERTEX struct
-    /*VERTEX_COLOR OurVertices[vertexCount] =
-    {
-        {D3DXVECTOR3(0.0f, 0.5f, 0.0f), D3DXCOLOR(1.0f, 0.0f, 0.0f, 1.0f)},
-        {D3DXVECTOR3(0.45f, -0.5, 0.0f), D3DXCOLOR(0.0f, 1.0f, 0.0f, 1.0f)},
-        {D3DXVECTOR3(-0.45f, -0.5f, 0.0f), D3DXCOLOR(0.0f, 0.0f, 1.0f, 1.0f)}
-    };*/
+
 	VERTEX_TEXTURE RectangleVertices[vertexCount] =
     {
         {D3DXVECTOR3(-1.0f, -1.0f, 0.0f), D3DXVECTOR2(1.0f, 1.0f)},

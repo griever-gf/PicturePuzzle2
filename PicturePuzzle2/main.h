@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <windowsx.h>
+#include <sstream>
 #include "WICTextureLoader.h"
 
 #include <d3d11.h>
@@ -40,15 +41,6 @@ void InitBuffers(void);
 
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-/*
-struct VERTEX_COLOR
-{
-      //FLOAT X, Y, Z;      // position
-	D3DXVECTOR3 position;
-    D3DXCOLOR Color;    // color
-	//D3DXVECTOR2 texture;
-};*/
 
 struct VERTEX_TEXTURE
 {
