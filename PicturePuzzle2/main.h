@@ -1,6 +1,11 @@
 #include <windows.h>
 #include <windowsx.h>
+
 #include <sstream>
+#include <algorithm>    // std::move_backward
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>       /* time */
+
 #include "WICTextureLoader.h"
 
 #include <d3d11.h>

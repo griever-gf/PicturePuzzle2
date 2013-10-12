@@ -145,6 +145,7 @@ void InitD3D(HWND hWnd)
     InitBuffers();				//creating render shape
 	//сначала инициализируем буфферы, а уже потом загружаем текстуру
 	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"seafloor.dds", NULL, NULL, &comTextureShaderView, NULL);
+	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"levsha.jpg", NULL, NULL, &comTextureShaderView, NULL);
 	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
 	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"internets.png", &comTexture, &comTextureShaderView, 2048);
 	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"beyond.bmp", &comTexture, &comTextureShaderView, 2048);
@@ -197,6 +198,14 @@ void InitBuffers()
 			indices[(i*numColumns+j)*6+5] = (i*numColumns+j)*4+2;
 		}
 	}
+
+	// obtain a time-based seed:
+  //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  //std::shuffle (TextCoordsArray.begin(), TextCoordsArray.end(), std::default_random_engine(seed));
+
+	srand (time(NULL));
+   std::random_shuffle ( &TextCoordsArray[0], &TextCoordsArray[vertexCount-1]);
+
 	VERTEX_TEXTURE RectangleVertices[vertexCount];
 	for (int i = 0; i < vertexCount; i++)
 	{
