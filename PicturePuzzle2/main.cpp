@@ -291,11 +291,7 @@ void InitD3D(HWND hWnd)
 	InitPipeline();				//load & init shaders
     InitBuffers();				//creating render shape
 	//сначала инициализируем буфферы, а уже потом загружаем текстуру
-	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"seafloor.dds", NULL, NULL, &comTextureShaderView, NULL);
-	//HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"levsha.jpg", NULL, NULL, &comTextureShaderView, NULL);
-	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"levsha.jpg", &comTexture, &comTextureShaderView, 2048);
-	//HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"internets.png", &comTexture, &comTextureShaderView, 2048);
-	HRESULT	result = CreateWICTextureFromFile(comDevice, comDeviceContext, L"beyond.bmp", &comTexture, &comTextureShaderView, 2048);
+	HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &comTextureShaderView, NULL);
 }
 
 // this is the function that cleans up Direct3D and COM
@@ -370,29 +366,15 @@ void InitBuffers()
 		RectangleVertices[i*4+j].texture = TextCoordsArray[i][j];
 	}
 
-	/*VERTEX_TEXTURE RectangleVertices[vertexCount] =
-    {
-        {D3DXVECTOR3(-1.0f, -1.0f, 0.0f), D3DXVECTOR2(1.0f, 1.0f)},
-        {D3DXVECTOR3(-1.0f, 1.0f, 0.0f),  D3DXVECTOR2(1.0f, 0.0f)},
-		{D3DXVECTOR3(1.0f, 1.0f, 0.0f),   D3DXVECTOR2(0.0f, 0.0f)},
-        {D3DXVECTOR3(1.0f, -1.0f, 0.0f),  D3DXVECTOR2(0.0f, 1.0f)}
-    };
-	unsigned long indices[] = { 0, 1, 3, 3, 1, 2 }; // Индексы соответствуют обходу вершин по часовой стрелке.*/
-
     // create the vertex buffer
     D3D11_BUFFER_DESC vertexBufferDesc, indexBufferDesc;
 	D3D11_SUBRESOURCE_DATA vertexData, indexData;
     ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc)); ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-	//D3D11_SUBRESOURCE_DATA vertexData, indexData;
 
-    vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;                // GPU (read only) and the CPU (write only). To update a dynamic resource, use a Map method.
-	//vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;  
-    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * vertexCount;             // size is the VERTEX struct * 3
+    vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;				// GPU (read only) and the CPU (write only). To update a dynamic resource, use a Map method.
+    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * vertexCount;
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;       // use as a vertex buffer
     vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-	//vertexBufferDesc.CPUAccessFlags  = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
-	//vertexBufferDesc.CPUAccessFlags  = D3D11_CPU_ACCESS_READ;
-	//D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
 
 	vertexData.pSysMem = RectangleVertices;
 	vertexData.SysMemPitch = 0;
