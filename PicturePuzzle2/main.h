@@ -5,6 +5,7 @@
 #include <algorithm>    // std::move_backward
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+ 
 
 #include "WICTextureLoader.h"
 
@@ -37,12 +38,15 @@ ID3D11Resource				*comTexture = NULL;
 ID3D11ShaderResourceView	*comTextureShaderView = NULL; // Объект текстуры
 ID3D11SamplerState			*comSamplerState;
 
+
+
 // function prototypes
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D
-void RenderFrame(void);     // renders a single frame
+void RenderFrame(HWND hWnd);     // renders a single frame
 void CleanD3D(void);         // closes Direct3D and releases memory
 void InitPipeline(void);
 void InitBuffers(void);
+bool IsGameComplete(void);
 
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
@@ -53,12 +57,18 @@ struct VERTEX_TEXTURE
 	D3DXVECTOR2 texture;
 };
 
-//const int vertexCount = 4, indexCount = 6;
 
-const int numRows = 5, numColumns = 5;
+//const int numRows = 5, numColumns = 5;
+//const int numRows = 6, numColumns = 4;
+const int numRows = 3, numColumns = 3;
 
 //const int vertexCount = (numRows+1)*(numColumns+1);
 const int vertexCount = numRows*numColumns*4;
 const int indexCount = numRows*numColumns*6;
 
-bool isFirstClick = false, isGameFinished = false;
+bool isFirstClick = false, flagGameFinished = false;
+
+int previousCellNumber = 0, currentCellNumber = 0;
+
+VERTEX_TEXTURE RectangleVertices[vertexCount];
+D3DXVECTOR2 StandardTextCoords[vertexCount];
