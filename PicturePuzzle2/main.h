@@ -31,9 +31,15 @@ ID3D11PixelShader		*comPixelShader;     // the pixel shader
 ID3D11Buffer			*comVertexBuffer; 
 ID3D11Buffer			*comIndexBuffer; 
 ID3D11InputLayout		*comInputLayout;
-
 ID3D11ShaderResourceView	*comTextureShaderView = NULL; // Объект текстуры
 ID3D11SamplerState			*comSamplerState;
+
+ID3D11ShaderResourceView	*fontTextureShaderView = NULL;
+ID3D11VertexShader			*fontVertexShader;    // the vertex shader
+ID3D11PixelShader			*fontPixelShader;     // the pixel shader
+ID3D11Buffer				*fontVertexBuffer; 
+ID3D11Buffer				*fontIndexBuffer; 
+ID3D11SamplerState			*fontAtlasSampler;
 
 // function prototypes
 void InitD3D(HWND hWnd);     // sets up and initializes Direct3D
@@ -53,13 +59,14 @@ struct VERTEX_TEXTURE
 };
 
 const int numRows = 3, numColumns = 3;
-
 const int vertexCount = numRows*numColumns*4; //may be  (numRows+1)*(numColumns+1);
 const int indexCount = numRows*numColumns*6;
 
-bool isFirstClick = false, flagGameFinished = false;
-
-int previousCellNumber = 0, currentCellNumber = 0;
-
 VERTEX_TEXTURE RectangleVertices[vertexCount];
 D3DXVECTOR2 StandardTextCoords[vertexCount];
+
+
+bool isFirstClick = false, flagGameFinished = false;
+int previousCellNumber = 0, currentCellNumber = 0;
+
+

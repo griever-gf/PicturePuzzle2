@@ -132,107 +132,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 
 			break;
-			//D3D11_MAP_READ_WRITE
-			//D3D11_MAP_WRITE_DISCARD
-
-			//VERTEX_TEXTURE EmptyVertices[vertexCount];
-			//ZeroMemory( &EmptyVertices, sizeof(EmptyVertices) );
-			//VERTEX_TEXTURE* mappedData = reinterpret_cast<VERTEX_TEXTURE*>(mappedSubRes.pData);
-
-			/*D3D11_BOX srcBox;
-			//srcBox.left = sizeof(VERTEX_TEXTURE)*4+3;
-			//srcBox.right = sizeof(VERTEX_TEXTURE)*4+5;
-			srcBox.left = 0;
-			srcBox.right = 20;
-			srcBox.top = 0;
-			srcBox.bottom = 1;
-			srcBox.front = 0;
-			srcBox.back = 1;*/
-
-			//comDeviceContext->CopySubresourceRegion(mappedSubRes, 0, NULL, comVertexBuffer, 0, 0);
-			
-			//UINT stride = sizeof(VERTEX_TEXTURE);
-			//UINT offset = 0;
-			//comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
-			//this->_context->PSSetConstantBuffers(0, 1, &pShaderBuffer);
-			//ID3D11Buffer			*tmpVertexBuffer; 
-			//comDeviceContext->CopyResource(tmpVertexBuffer, comVertexBuffer);
-
-			/*ID3D11Buffer* tmpBuffer;
-			//comDeviceContext->CopySubresourceRegion(resource, 0, 0, 0, 0, comVertexBuffer, 0, &srcBox);
-
-			D3D11_BUFFER_DESC vertexBufferDesc;
-			D3D11_SUBRESOURCE_DATA vertexData;
-			VERTEX_TEXTURE EmptyVertices[vertexCount];
-
-			vertexBufferDesc.Usage = D3D11_USAGE_STAGING;                
-			//vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * vertexCount;             // size is the VERTEX struct * 3
-			vertexBufferDesc.BindFlags = 0;       // use as a vertex buffer
-			//vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;    // allow CPU to write in buffer
-			//vertexBufferDesc.CPUAccessFlags  = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
-			vertexBufferDesc.CPUAccessFlags  = D3D11_CPU_ACCESS_READ;
-			//D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-
-			vertexData.pSysMem = EmptyVertices;
-			vertexData.SysMemPitch = 0;
-			vertexData.SysMemSlicePitch = 0;
-			
-			comDevice->CreateBuffer(&vertexBufferDesc, NULL, &tmpBuffer);
-			comDeviceContext->CopyResource(tmpBuffer, comVertexBuffer);
-
-			HRESULT h = comDeviceContext->Map(tmpBuffer, NULL, D3D11_MAP_READ_WRITE, NULL, &mappedSubRes);*/
-
-			/*tmpVertexData.pSysMem = RectangleVertices;
-			vertexData.SysMemPitch = 0;
-			vertexData.SysMemSlicePitch = 0;
-
-			VERTEX_TEXTURE *dataPtr = (VERTEX_TEXTURE*)vertexData.pSysMem;
-			VERTEX_TEXTURE tmp = dataPtr[0];
-			dataPtr[10] = tmp;
-
-			memcpy(mappedSubRes.pData, &vertexData[0], sizeof(vertexData));*/
-
-			/*D3D11_BOX sourceRegion;
-			sourceRegion.left = 0;
-			sourceRegion.right = sizeof(VERTEX_TEXTURE);
-			sourceRegion.top = 0;
-			sourceRegion.bottom = 1;
-			sourceRegion.front = 0;
-			sourceRegion.back = 1;
-			//ID3D11Resource dummyRes;
-			ID3D11Buffer *tmp_buffer;
-
-			comDeviceContext->CopySubresourceRegion(tmp_buffer, 0+sizeof(VERTEX_TEXTURE), 0, 0, 0, comVertexBuffer, 0, &sourceRegion);*/
-			 //HRESULT hr = s_d3dContext->Map(pBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &MappedResource);
- 
-			//VERTEX_TEXTURE *dataPtr;
-			//D3D11_SUBRESOURCE_DATA
-
-			/*float *vertices = (float *) mappedSubRes.pData;
-				data = (float *)comVertexBuffer.pData[i];
-			int len = s_vertexBuffers.pStrides[i];
-			  if (i != VERTEX_BUFFER::COLOR)
-			  {
-				  len *= total;
-			  }
-			  memcpy(vertices, data, len);*/
-
-			/*
-			VERTEX_TEXTURE *dataPtr;
-			dataPtr = (VERTEX_TEXTURE *)ms.pData[2];
-			//dataPtr[0]->
-
-			dataPtr = (VERTEX_TEXTURE *)(ms.pData+sizeof(VERTEX_TEXTURE));
-			dataPtr->
-			dataPtr->pBuffers[i] = s_vertexBuffers.pBuffers[i].Get();
-			dataPtr->pSizes[i] = s_vertexBuffers.pSizes[i];
-			dataPtr->pStrides[i] = s_vertexBuffers.pStrides[i];
-			if (i != VERTEX_BUFFER::COLOR) 
-			{
-			   dataPtr->pStrides[i] *= total;
-			}
-			memcpy(dataPtr->pData[i], s_vertexBuffers.pData[i], dataPtr->pStrides[i]);
-			*/
 
     }
 
@@ -290,8 +189,9 @@ void InitD3D(HWND hWnd)
 
 	InitPipeline();				//load & init shaders
     InitBuffers();				//creating render shape
-	//сначала инициализируем буфферы, а уже потом загружаем текстуру
-	HRESULT result = D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &comTextureShaderView, NULL);
+	//загружаем текстуры
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &comTextureShaderView, NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L"task_complete.png", NULL, NULL, &fontTextureShaderView, NULL);
 }
 
 // this is the function that cleans up Direct3D and COM
@@ -308,6 +208,10 @@ void CleanD3D()
 	comBackBuffer->Release();
     comDevice->Release();
     comDeviceContext->Release();
+
+	fontTextureShaderView->Release();
+	fontVertexBuffer->Release();
+	fontIndexBuffer->Release();
 }
 
 // this is the function that creates the shape to render
@@ -316,6 +220,7 @@ void InitBuffers()
 	comVertexBuffer = NULL;
 	comIndexBuffer = NULL;
 	comTextureShaderView = NULL;
+	fontTextureShaderView = NULL;
 
 	D3DXVECTOR3 ScreenCoordsArray[vertexCount/4][4];
 	D3DXVECTOR2 TextCoordsArray[vertexCount/4][4];
@@ -396,6 +301,26 @@ void InitBuffers()
 
 	// Create the index buffer.
 	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &comIndexBuffer);
+
+	fontVertexBuffer = NULL;
+	fontIndexBuffer = NULL;
+	fontTextureShaderView = NULL;
+
+	VERTEX_TEXTURE LabelVertices[4] = { {D3DXVECTOR3(-0.7f,-0.1f,0.0f),D3DXVECTOR2(0.0f,1.0f)},
+										{D3DXVECTOR3(-0.7f,0.1f,0.0f),D3DXVECTOR2(0.0f,0.0f)},
+										{D3DXVECTOR3(0.7f,0.1f,0.0f),D3DXVECTOR2(1.0f,0.0f)},
+										{D3DXVECTOR3(0.7f,-0.1f,0.0f),D3DXVECTOR2(1.0f,1.0f)}};
+	vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * 4;
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexData.pSysMem = LabelVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &fontVertexBuffer); 
+
+	unsigned long label_indices[6] = {0, 1, 3, 3, 1, 2}; //rectangle = two triangles
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * 6;
+	indexData.pSysMem = label_indices;
+	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &fontIndexBuffer);
 }
 
 
@@ -423,13 +348,10 @@ void InitPipeline()
     };
 
     comDevice->CreateInputLayout(myInputLayout, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &comInputLayout);
-    //comDeviceContext->IASetInputLayout(comInputLayout); //moved to render function
 
 	VS->Release(); PS->Release();
 
 	D3D11_SAMPLER_DESC samplerDesc;
-	// Create a texture sampler state description.
-    //samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
     samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
     samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -446,6 +368,19 @@ void InitPipeline()
 
 	// Create the texture sampler state.
     HRESULT result = comDevice->CreateSamplerState(&samplerDesc, &comSamplerState);
+
+	ID3D10Blob* FONT_VS_Buffer,*FONT_PS_Buffer;
+	h1 = D3DX11CompileFromFile(L"shaders_font.hlsl", 0, 0, "FONT_VS", "vs_5_0", 0, 0, 0, &FONT_VS_Buffer, 0, 0);
+    h2 = D3DX11CompileFromFile(L"shaders_font.hlsl", 0, 0, "FONT_PS", "ps_5_0", 0, 0, 0, &FONT_PS_Buffer, 0, 0);
+	comDevice->CreateVertexShader(FONT_VS_Buffer->GetBufferPointer(),FONT_VS_Buffer->GetBufferSize(),NULL,&fontVertexShader);
+	comDevice->CreatePixelShader(FONT_PS_Buffer->GetBufferPointer(),FONT_PS_Buffer->GetBufferSize(),NULL,&fontPixelShader);
+	comDeviceContext->VSSetShader(fontVertexShader, 0, 0);
+    comDeviceContext->PSSetShader(fontPixelShader, 0, 0);
+	comDevice->CreateInputLayout(myInputLayout, 2, FONT_VS_Buffer->GetBufferPointer(), FONT_VS_Buffer->GetBufferSize(), &comInputLayout);
+
+	samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	//samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	comDevice->CreateSamplerState(&samplerDesc,&fontAtlasSampler);
 }
 
 // this is the function used to render a single frame
@@ -481,15 +416,19 @@ void RenderFrame(HWND hWnd)
 	comDeviceContext->DrawIndexed(indexCount, 0, 0);
     //comDeviceContext->Draw(indexCount, 0); // draw 3 vertices, starting from vertex 0
 
-    // switch the back buffer and the front buffer
-    comSwapChain->Present(0, 0); // Present as fast as possible.
-
 	if (IsGameComplete())
 	{
 		flagGameFinished = true;
-		MessageBox(hWnd,L"Game Complete!",L"Element coords",MB_OK);
+		comDeviceContext->VSSetShader(fontVertexShader,0,0);
+		comDeviceContext->PSSetShader(fontPixelShader,0,0);
+		comDeviceContext->PSSetShaderResources(0, 1, &fontTextureShaderView);
+		comDeviceContext->IASetVertexBuffers(0, 1, &fontVertexBuffer, &stride, &offset);
+		comDeviceContext->IASetIndexBuffer(fontIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		comDeviceContext->PSSetSamplers(0,1,&fontAtlasSampler);
+		comDeviceContext->DrawIndexed(6, 0, 0);
 	}
-	
+	// switch the back buffer and the front buffer
+    comSwapChain->Present(0, 0); // Present as fast as possible.
 }
 
 bool IsGameComplete()
