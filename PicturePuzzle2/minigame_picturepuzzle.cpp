@@ -95,24 +95,24 @@ void MiniGamePicturePuzzle::InitBuffers()
 	D3DXVECTOR3 ScreenCoordsArray[vertexCount/4][4];
 	D3DXVECTOR2 TextCoordsArray[vertexCount/4][4];
 	unsigned long indices[indexCount];
-	for (int i = 0; i < numRows; i++)
+	for (int i = 0; i < cRows; i++)
 	{
-		for (int j = 0; j < numColumns; j++)
+		for (int j = 0; j < cColumns; j++)
 		{
-			ScreenCoordsArray[(i*numColumns+j)][0] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
-			ScreenCoordsArray[(i*numColumns+j)][1] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*j    ), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
-			ScreenCoordsArray[(i*numColumns+j)][2] = D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*i    ), 0.0f);
-			ScreenCoordsArray[(i*numColumns+j)][3]= D3DXVECTOR3(-1.0f + ((2.0f/numColumns)*(j+1)), 1.0f - ((2.0f/numRows)*(i+1)), 0.0f);
-			TextCoordsArray[(i*numColumns+j)][0] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*(i+1));
-			TextCoordsArray[(i*numColumns+j)][1] = D3DXVECTOR2((1.0f/numColumns)*(j+0), (1.0f/numRows)*i    );
-			TextCoordsArray[(i*numColumns+j)][2] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*i    );
-			TextCoordsArray[(i*numColumns+j)][3] = D3DXVECTOR2((1.0f/numColumns)*(j+1), (1.0f/numRows)*(i+1));
-			indices[(i*numColumns+j)*6  ] = (i*numColumns+j)*4;
-			indices[(i*numColumns+j)*6+1] = (i*numColumns+j)*4+1;
-			indices[(i*numColumns+j)*6+2] = (i*numColumns+j)*4+3;
-			indices[(i*numColumns+j)*6+3] = (i*numColumns+j)*4+3;
-			indices[(i*numColumns+j)*6+4] = (i*numColumns+j)*4+1;
-			indices[(i*numColumns+j)*6+5] = (i*numColumns+j)*4+2;
+			ScreenCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*j    ), 1.0f - ((2.0f/cRows)*(i+1)), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*j    ), 1.0f - ((2.0f/cRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*(j+1)), 1.0f - ((2.0f/cRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][3]= D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*(j+1)), 1.0f - ((2.0f/cRows)*(i+1)), 0.0f);
+			TextCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR2((1.0f/cColumns)*(j+0), (1.0f/cRows)*(i+1));
+			TextCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR2((1.0f/cColumns)*(j+0), (1.0f/cRows)*i    );
+			TextCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR2((1.0f/cColumns)*(j+1), (1.0f/cRows)*i    );
+			TextCoordsArray[(i*cColumns+j)][3] = D3DXVECTOR2((1.0f/cColumns)*(j+1), (1.0f/cRows)*(i+1));
+			indices[(i*cColumns+j)*6  ] = (i*cColumns+j)*4;
+			indices[(i*cColumns+j)*6+1] = (i*cColumns+j)*4+1;
+			indices[(i*cColumns+j)*6+2] = (i*cColumns+j)*4+3;
+			indices[(i*cColumns+j)*6+3] = (i*cColumns+j)*4+3;
+			indices[(i*cColumns+j)*6+4] = (i*cColumns+j)*4+1;
+			indices[(i*cColumns+j)*6+5] = (i*cColumns+j)*4+2;
 		}
 	}
 	//save original texture coordinates
@@ -267,10 +267,10 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 				  width = rect.right - rect.left;
 				  height = rect.bottom - rect.top;
 				}
-				int x = ((int)x1) / (width/numColumns);
-				int y = ((int)y1) / (height/numRows);
+				int x = ((int)x1) / (width/cColumns);
+				int y = ((int)y1) / (height/cRows);
 
-				currentCellNumber = x + y*numColumns;
+				currentCellNumber = x + y*cColumns;
 
 				//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
 				//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);

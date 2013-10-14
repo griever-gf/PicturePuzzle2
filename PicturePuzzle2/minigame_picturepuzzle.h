@@ -20,10 +20,6 @@
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 600
 
-const int numRows = 3, numColumns = 3;
-const int vertexCount = numRows*numColumns*4; //may be  (numRows+1)*(numColumns+1);
-const int indexCount = numRows*numColumns*6;
-
 class MiniGamePicturePuzzle : public MiniGame
 {
 public:
@@ -40,6 +36,9 @@ private:
 	void InitPipeline(void);
 	void InitBuffers(void);
 	
+	//const int cRows = 3, cColumns = 3;
+	static const int vertexCount = cRows*cColumns*4; //may be  (cRows+1)*(cColumns+1);
+	static const int indexCount = cRows*cColumns*6;
 
 	struct VERTEX_TEXTURE
 	{
