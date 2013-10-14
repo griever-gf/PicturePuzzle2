@@ -32,7 +32,6 @@ ID3D11Buffer			*comVertexBuffer;
 ID3D11Buffer			*comIndexBuffer; 
 ID3D11InputLayout		*comInputLayout;
 
-ID3D11Resource				*comTexture = NULL;
 ID3D11ShaderResourceView	*comTextureShaderView = NULL; // Объект текстуры
 ID3D11SamplerState			*comSamplerState;
 
@@ -53,13 +52,9 @@ struct VERTEX_TEXTURE
 	D3DXVECTOR2 texture;
 };
 
-
-//const int numRows = 5, numColumns = 5;
-//const int numRows = 6, numColumns = 4;
 const int numRows = 3, numColumns = 3;
 
-//const int vertexCount = (numRows+1)*(numColumns+1);
-const int vertexCount = numRows*numColumns*4;
+const int vertexCount = numRows*numColumns*4; //may be  (numRows+1)*(numColumns+1);
 const int indexCount = numRows*numColumns*6;
 
 bool isFirstClick = false, flagGameFinished = false;

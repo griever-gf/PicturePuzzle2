@@ -103,7 +103,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 				//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
 				//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
 				//isFirstClick = true;
-				if (!isFirstClick) //if second click - swap texture coordinates for rectangle regions
+				if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
 				{
 					D3D11_MAPPED_SUBRESOURCE mappedSubRes;
 					ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
@@ -314,8 +314,7 @@ void CleanD3D()
 void InitBuffers()
 {
 	comVertexBuffer = NULL;
-	comIndexBuffer = NULL; 
-	comTexture = NULL;
+	comIndexBuffer = NULL;
 	comTextureShaderView = NULL;
 
 	D3DXVECTOR3 ScreenCoordsArray[vertexCount/4][4];
@@ -463,6 +462,7 @@ void RenderFrame(HWND hWnd)
 	// select which vertex buffer to display
     UINT stride = sizeof(VERTEX_TEXTURE);
     UINT offset = 0;
+	
     comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
 
     // Set the index buffer to active in the input assembler so it can be rendered.
