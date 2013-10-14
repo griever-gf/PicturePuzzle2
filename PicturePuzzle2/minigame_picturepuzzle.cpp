@@ -351,8 +351,6 @@ void MiniGamePicturePuzzle::Render() const
 	if (IsComplete())
 	{
 		flagGameFinished = true;
-		//SetFlagGameFinished(true);
-		//const_cast<MiniGamePicturePuzzle&>
 		comDeviceContext->VSSetShader(fontVertexShader,0,0);
 		comDeviceContext->PSSetShader(fontPixelShader,0,0);
 		comDeviceContext->PSSetShaderResources(0, 1, &fontTextureShaderView);
@@ -364,4 +362,10 @@ void MiniGamePicturePuzzle::Render() const
 	// switch the back buffer and the front buffer
     comSwapChain->Present(0, 0); // Present as fast as possible.
 }
+
+void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord)
+{
+
+}
+
 

@@ -35,8 +35,7 @@ public:
 private:
 	void InitPipeline(void);
 	void InitBuffers(void);
-	
-	//const int cRows = 3, cColumns = 3;
+
 	static const int vertexCount = cRows*cColumns*4; //may be  (cRows+1)*(cColumns+1);
 	static const int indexCount = cRows*cColumns*6;
 
