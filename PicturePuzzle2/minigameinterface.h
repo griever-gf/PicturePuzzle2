@@ -18,9 +18,9 @@ public:
 	virtual void Render() const = 0;			// called to render one frame (must use global Render function)
 
 public:
-	static const int cTextureId = 1;
-	static const int cColumns = 5;
-	static const int cRows = 5;
+	static const int cTextureId = 0;
+	static const int cColumns = 3;
+	static const int cRows = 3;
 };
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord);

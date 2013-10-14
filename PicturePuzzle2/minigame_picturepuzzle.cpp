@@ -7,8 +7,7 @@ MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 	previousCellNumber = 0;
 	currentCellNumber = 0;
 
-	comTextureShaderView = NULL;
-	fontTextureShaderView = NULL;
+	ZeroMemory(&textureShaderViews, sizeof(textureShaderViews));
 }
 
 MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
@@ -24,10 +23,10 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
 	comBackBuffer->Release();
     comDevice->Release();
     comDeviceContext->Release();
-
-	fontTextureShaderView->Release();
 	fontVertexBuffer->Release();
 	fontIndexBuffer->Release();
+	for(int i = 0; i < 2; i++)
+		textureShaderViews[i]->Release();
 }
 
 void MiniGamePicturePuzzle::Initialize()
@@ -80,8 +79,8 @@ void MiniGamePicturePuzzle::Initialize()
 	InitPipeline();				//load & init shaders
     InitBuffers();				//creating render shape
 	//загружаем текстуры
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &comTextureShaderView, NULL);
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L"task_complete.png", NULL, NULL, &fontTextureShaderView, NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &textureShaderViews[0], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L"task_complete.png", NULL, NULL, &textureShaderViews[1], NULL);
 }
 
 // this is the function that creates the shape to render
@@ -89,8 +88,7 @@ void MiniGamePicturePuzzle::InitBuffers()
 {
 	comVertexBuffer = NULL;
 	comIndexBuffer = NULL;
-	comTextureShaderView = NULL;
-	fontTextureShaderView = NULL;
+	ZeroMemory(&textureShaderViews, sizeof(textureShaderViews));
 
 	D3DXVECTOR3 ScreenCoordsArray[vertexCount/4][4];
 	D3DXVECTOR2 TextCoordsArray[vertexCount/4][4];
@@ -174,7 +172,7 @@ void MiniGamePicturePuzzle::InitBuffers()
 
 	fontVertexBuffer = NULL;
 	fontIndexBuffer = NULL;
-	fontTextureShaderView = NULL;
+	textureShaderViews[1] = NULL;
 
 	VERTEX_TEXTURE LabelVertices[4] = { {D3DXVECTOR3(-0.9f,-0.25f,0.0f),D3DXVECTOR2(0.0f,1.0f)},
 										{D3DXVECTOR3(-0.9f,0.25f,0.0f),D3DXVECTOR2(0.0f,0.0f)},
@@ -319,7 +317,7 @@ bool MiniGamePicturePuzzle::IsComplete() const
 void MiniGamePicturePuzzle::Render() const
 {
 	// Set shader texture resource in the pixel shader.
-	comDeviceContext->PSSetShaderResources(0, 1, &comTextureShaderView); //APPLYING TEXTURE
+	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
 	// Set the vertex input layout.
 	comDeviceContext->IASetInputLayout(comInputLayout);
 
@@ -353,7 +351,7 @@ void MiniGamePicturePuzzle::Render() const
 		flagGameFinished = true;
 		comDeviceContext->VSSetShader(fontVertexShader,0,0);
 		comDeviceContext->PSSetShader(fontPixelShader,0,0);
-		comDeviceContext->PSSetShaderResources(0, 1, &fontTextureShaderView);
+		comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[1]);
 		comDeviceContext->IASetVertexBuffers(0, 1, &fontVertexBuffer, &stride, &offset);
 		comDeviceContext->IASetIndexBuffer(fontIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 		comDeviceContext->PSSetSamplers(0,1,&fontAtlasSampler);
@@ -361,11 +359,13 @@ void MiniGamePicturePuzzle::Render() const
 	}
 	// switch the back buffer and the front buffer
     comSwapChain->Present(0, 0); // Present as fast as possible.
+
+	//comDeviceContext->VSGetShader
 }
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord)
 {
-
+	
 }
 
 
