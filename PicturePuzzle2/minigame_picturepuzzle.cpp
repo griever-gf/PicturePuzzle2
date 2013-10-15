@@ -1,6 +1,7 @@
 #include "minigame_picturepuzzle.h"
 
 Rect coordsScreen, coordsTexture;
+VERTEX_TEXTURE RectangleVertices[vertexCount];
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -384,7 +385,12 @@ void MiniGamePicturePuzzle::Render() const
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord)
 {
-	
+	for (int i = 0; i < vertexCount; i++)
+	{
+		RectangleVertices[i*4].position = D3DXVECTOR3(1,1,1);
+		RectangleVertices[i*4].texture = D3DXVECTOR2(1,1);
+	}
+
 }
 
 

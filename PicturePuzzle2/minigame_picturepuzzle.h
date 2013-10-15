@@ -20,6 +20,17 @@
 #define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 600
 
+
+struct VERTEX_TEXTURE
+{
+	D3DXVECTOR3 position;
+	D3DXVECTOR2 texture;
+};
+
+//эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle...
+static const int vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be  (cRows+1)*(cColumns+1);
+extern VERTEX_TEXTURE RectangleVertices[vertexCount];
+
 class MiniGamePicturePuzzle : public MiniGame
 {
 public:
@@ -36,16 +47,8 @@ private:
 	void InitPipeline(void);
 	void InitBuffers(void);
 
-	static const int vertexCount = cRows*cColumns*4; //may be  (cRows+1)*(cColumns+1);
 	static const int indexCount = cRows*cColumns*6;
-
-	struct VERTEX_TEXTURE
-	{
-		D3DXVECTOR3 position;
-		D3DXVECTOR2 texture;
-	};
-
-	VERTEX_TEXTURE RectangleVertices[vertexCount];
+	
 	D3DXVECTOR2 StandardTextCoords[vertexCount];
 
 	bool isFirstClick;
@@ -72,7 +75,6 @@ private:
 	
 	static const int texturesNum = 3;
 	ID3D11ShaderResourceView	*textureShaderViews[texturesNum];
-};
 
-//эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle...
-extern Rect coordsScreen, coordsTexture;
+	Rect coordsScreen, coordsTexture;
+};
