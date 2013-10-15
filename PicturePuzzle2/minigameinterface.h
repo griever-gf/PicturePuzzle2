@@ -23,7 +23,7 @@ public:
 	static const int cRows = 3;
 };
 
-void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord);
+void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords);
 
 /////////////////////////////////////////////////////////////////////////////
 

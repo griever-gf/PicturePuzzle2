@@ -1,7 +1,9 @@
 #include "minigame_picturepuzzle.h"
 
 Rect coordsScreen, coordsTexture;
-VERTEX_TEXTURE RectangleVertices[vertexCount];
+VERTEX_TEXTURE			RectangleVertices[vertexCount];
+ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
+ID3D11Buffer			*comVertexBuffer; 
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -336,6 +338,12 @@ bool MiniGamePicturePuzzle::IsComplete() const
 
 void MiniGamePicturePuzzle::Render() const
 {
+	Rect coordsScreenNew, coordsTextureNew;
+	coordsScreenNew.left = 0.0;
+	coordsScreenNew.right = 1.0;
+	coordsScreenNew.top = 0.0;
+	coordsScreenNew.bottom = -1.0;
+	::Render(coordsScreenNew, 1, coordsTextureNew); //:: - means global namespace
 	// Set shader texture resource in the pixel shader.
 	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
 	// Set the vertex input layout.
@@ -383,14 +391,34 @@ void MiniGamePicturePuzzle::Render() const
 	//comDeviceContext->VSGetShader
 }
 
-void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord)
+void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 {
-	for (int i = 0; i < vertexCount; i++)
+	float levelCompressionCoordX = (screenCoords.right - screenCoords.left)/(coordsScreen.right - coordsScreen.left);
+	float levelCompressionCoordY = (screenCoords.top - screenCoords.bottom)/(coordsScreen.top - coordsScreen.bottom);
+	float levelShiftCoordX = screenCoords.left - coordsScreen.left;
+	float levelShiftCoordY = screenCoords.bottom - coordsScreen.bottom;
+	//float levelShiftCoordY = screenCoords.top - coordsScreen.top;
+	//0,1
+	//0,0
+	//1,0
+	//1,1
+	for (int k = 0; k < vertexCount; k++)
 	{
-		RectangleVertices[i*4].position = D3DXVECTOR3(1,1,1);
-		RectangleVertices[i*4].texture = D3DXVECTOR2(1,1);
+		RectangleVertices[k].position.x = (RectangleVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
+		RectangleVertices[k].position.y = (RectangleVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
 	}
 
+	D3D11_MAPPED_SUBRESOURCE mappedSubRes;
+	ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+	comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);  
+
+					
+	memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));  
+	comDeviceContext->Unmap(comVertexBuffer, NULL);
+
+	//save current rectangle
+	coordsScreen = screenCoords;
+	coordsTexture = textureCoords;
 }
 
 

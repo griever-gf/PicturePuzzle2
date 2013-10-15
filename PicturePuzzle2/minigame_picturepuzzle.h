@@ -28,8 +28,11 @@ struct VERTEX_TEXTURE
 };
 
 //эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle...
-static const int vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be  (cRows+1)*(cColumns+1);
-extern VERTEX_TEXTURE RectangleVertices[vertexCount];
+static const int				vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be  (cRows+1)*(cColumns+1);
+extern VERTEX_TEXTURE			RectangleVertices[vertexCount];
+extern ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
+extern ID3D11Buffer				*comVertexBuffer;
+extern Rect coordsScreen, coordsTexture;
 
 class MiniGamePicturePuzzle : public MiniGame
 {
@@ -57,12 +60,12 @@ private:
 
 	IDXGISwapChain				*comSwapChain;             // the pointer to the swap chain interface
 	ID3D11Device				*comDevice;                     // the pointer to our Direct3D device interface
-	ID3D11DeviceContext			*comDeviceContext;           // the pointer to our Direct3D device context
+
 	ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
 
 	ID3D11VertexShader			*comVertexShader;    // the vertex shader
 	ID3D11PixelShader			*comPixelShader;     // the pixel shader
-	ID3D11Buffer				*comVertexBuffer; 
+
 	ID3D11Buffer				*comIndexBuffer; 
 	ID3D11InputLayout			*comInputLayout;
 	ID3D11SamplerState			*comSamplerState;
@@ -75,6 +78,4 @@ private:
 	
 	static const int texturesNum = 3;
 	ID3D11ShaderResourceView	*textureShaderViews[texturesNum];
-
-	Rect coordsScreen, coordsTexture;
 };
