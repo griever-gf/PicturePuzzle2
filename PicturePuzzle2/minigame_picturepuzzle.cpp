@@ -2,10 +2,18 @@
 
 Rect coordsScreen,	coordsTexture;
 Rect coordsScreenNew, coordsTextureNew;
-VERTEX_TEXTURE			RectangleVertices[vertexCount];
-D3DXVECTOR2				StandardTextCoords[vertexCount];
-ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
-ID3D11Buffer			*comVertexBuffer;
+VERTEX_TEXTURE				RectangleVertices[vertexCount];
+D3DXVECTOR2					StandardTextCoords[vertexCount];
+ID3D11DeviceContext			*comDeviceContext;           // the pointer to our Direct3D device context
+ID3D11Buffer				*comVertexBuffer;
+ID3D11ShaderResourceView	*textureShaderViews[texturesNum];
+int							currentTextureNum;
+ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
+ID3D11VertexShader			*comVertexShader;    // the vertex shader
+ID3D11PixelShader			*comPixelShader;     // the pixel shader
+ID3D11Buffer				*comIndexBuffer;
+ID3D11InputLayout			*comInputLayout;
+ID3D11SamplerState			*comSamplerState;
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -13,6 +21,7 @@ MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 	flagGameFinished = false;
 	previousCellNumber = 0;
 	currentCellNumber = 0;
+	txtID = 0;
 
 	ZeroMemory(&textureShaderViews, sizeof(textureShaderViews));
 }
@@ -32,7 +41,7 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
     comDeviceContext->Release();
 	fontVertexBuffer->Release();
 	fontIndexBuffer->Release();
-	for(int i = 0; i < 2; i++)
+	for(int i = 0; i < texturesNum; i++)
 		textureShaderViews[i]->Release();
 }
 
@@ -54,10 +63,10 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsScreenNew.top = 1.0;
 	coordsScreenNew.bottom = -1.0;
 	//texture coords should be between 0 & 1
-	coordsTextureNew.left = 0.0;
+	coordsTextureNew.left = 0.5;
 	coordsTextureNew.right = 1.0;
 	coordsTextureNew.top = 1.0;
-	coordsTextureNew.bottom = 0.0;
+	coordsTextureNew.bottom = 0.5;
 
 	// create a struct to hold information about the swap chain
     DXGI_SWAP_CHAIN_DESC tempSwapChain;
@@ -108,7 +117,8 @@ void MiniGamePicturePuzzle::Initialize()
     InitBuffers();				//creating render shape
 	//загружаем текстуры
 	D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &textureShaderViews[0], NULL);
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L"task_complete.png", NULL, NULL, &textureShaderViews[1], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L"fargus_souls.jpeg", NULL, NULL, &textureShaderViews[1], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L"task_complete.png", NULL, NULL, &textureShaderViews[2], NULL);
 }
 
 // this is the function that creates the shape to render
@@ -352,54 +362,31 @@ bool MiniGamePicturePuzzle::IsComplete() const
 
 void MiniGamePicturePuzzle::Render() const
 {
-
-	/*uncomment to see some FUNNY effect :)
 	
-	//screen coords should be between -1 & 1
+	//uncomment to see some FUNNY effect :)
+	/*
 	coordsScreenNew.left = fmod(coordsScreenNew.left+0.0001+1, 1) - 1;
 	coordsScreenNew.right = fmod(coordsScreenNew.right+0.0001+1, 1);
 	coordsScreenNew.top = fmod(coordsScreenNew.top+0.0001+1, 1);
 	coordsScreenNew.bottom = fmod(coordsScreenNew.bottom+0.0001+1, 1) - 1;
-	//texture coords should be between 0 & 1
+	coordsTextureNew.left = fmod(coordsTextureNew.left+0.0001, 0.5);
+	coordsTextureNew.right = fmod(coordsTextureNew.right+0.0001, 0.5) + 0.5;
+	coordsTextureNew.bottom = fmod(coordsTextureNew.bottom+0.0001, 0.5);
+	coordsTextureNew.top = fmod(coordsTextureNew.top+0.0001, 0.5) + 0.5;
+	txtID = (txtID+1) % 600;
 	*/
+	//comment lower string to see some FUNNY effect :)
+	txtID = 0;
+	::Render(coordsScreenNew, txtID / 300, coordsTextureNew); //рендер фона, :: - means global namespace
 
-	::Render(coordsScreenNew, 1, coordsTextureNew); //:: - means global namespace
-	// Set shader texture resource in the pixel shader.
-	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
-	// Set the vertex input layout.
-	comDeviceContext->IASetInputLayout(comInputLayout);
-
-	// clear the back buffer to a deep blue
-    comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
-
-	// select which vertex buffer to display
-    UINT stride = sizeof(VERTEX_TEXTURE);
-    UINT offset = 0;
-	
-    comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
-
-    // Set the index buffer to active in the input assembler so it can be rendered.
-	comDeviceContext->IASetIndexBuffer(comIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-
-    // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
-	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
-
-	// Set the sampler state in the pixel shader.
-	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);
-
-    // draw the vertex buffer to the back buffer
-	comDeviceContext->DrawIndexed(indexCount, 0, 0);
-    //comDeviceContext->Draw(indexCount, 0); // draw 3 vertices, starting from vertex 0
-
-	if (IsComplete())
+	if (IsComplete()) //render "complete" label
 	{
 		flagGameFinished = true;
 		comDeviceContext->VSSetShader(fontVertexShader,0,0);
 		comDeviceContext->PSSetShader(fontPixelShader,0,0);
-		comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[1]);
+		comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[2]);
+		UINT stride = sizeof(VERTEX_TEXTURE);
+		UINT offset = 0;
 		comDeviceContext->IASetVertexBuffers(0, 1, &fontVertexBuffer, &stride, &offset);
 		comDeviceContext->IASetIndexBuffer(fontIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 		comDeviceContext->PSSetSamplers(0,1,&fontAtlasSampler);
@@ -446,6 +433,37 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 	//save current rectangle
 	coordsScreen = screenCoords;
 	coordsTexture = textureCoords;
+
+	// Set shader texture resource in the pixel shader.
+	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[textureId]); //APPLYING TEXTURE
+
+		// Set the vertex input layout.
+	comDeviceContext->IASetInputLayout(comInputLayout);
+
+	// clear the back buffer to a deep blue
+    comDeviceContext->ClearRenderTargetView(comBackBuffer, D3DXCOLOR(0.0f, 0.2f, 0.4f, 1.0f));
+
+	// select which vertex buffer to display
+    UINT stride = sizeof(VERTEX_TEXTURE);
+    UINT offset = 0;
+	
+    comDeviceContext->IASetVertexBuffers(0, 1, &comVertexBuffer, &stride, &offset);
+
+    // Set the index buffer to active in the input assembler so it can be rendered.
+	comDeviceContext->IASetIndexBuffer(comIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+
+    // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
+	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
+	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
+
+	// Set the sampler state in the pixel shader.
+	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);
+
+    // draw the vertex buffer to the back buffer
+	comDeviceContext->DrawIndexed(indexCount, 0, 0);
+    //comDeviceContext->Draw(indexCount, 0); // draw 3 vertices, starting from vertex 0
 }
 
 

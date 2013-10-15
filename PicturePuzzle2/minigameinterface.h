@@ -19,8 +19,8 @@ public:
 
 public:
 	static const int cTextureId = 0;
-	static const int cColumns = 3;
-	static const int cRows = 3;
+	static const int cColumns = 5;
+	static const int cRows = 5;
 };
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords);

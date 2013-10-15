@@ -28,13 +28,24 @@ struct VERTEX_TEXTURE
 	D3DXVECTOR2 texture;
 };
 
-//эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle...
+//эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle,
+//а ей нужно передавать параметры, а они ограничены шаблоном из текста тестового задания...
 static const int				vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be  (cRows+1)*(cColumns+1);
+static const int				indexCount = MiniGame::cRows*MiniGame::cColumns*6;
 extern VERTEX_TEXTURE			RectangleVertices[vertexCount];
 extern D3DXVECTOR2				StandardTextCoords[vertexCount];
 extern ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
 extern ID3D11Buffer				*comVertexBuffer;
-extern Rect coordsScreen, coordsTexture;
+extern Rect						coordsScreen, coordsTexture;
+static const int texturesNum = 3;
+extern ID3D11ShaderResourceView	*textureShaderViews[texturesNum];
+extern int						currentTextureNum;
+extern	ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
+extern	ID3D11VertexShader			*comVertexShader;    // the vertex shader
+extern	ID3D11PixelShader			*comPixelShader;     // the pixel shader
+extern	ID3D11Buffer				*comIndexBuffer;
+extern	ID3D11InputLayout			*comInputLayout;
+extern	ID3D11SamplerState			*comSamplerState;
 
 class MiniGamePicturePuzzle : public MiniGame
 {
@@ -52,9 +63,8 @@ private:
 	void InitPipeline(void);
 	void InitBuffers(void);
 
-	static const int indexCount = cRows*cColumns*6;
-	
 
+	mutable int txtID;
 
 	bool isFirstClick;
 	mutable bool flagGameFinished;
@@ -63,21 +73,9 @@ private:
 	IDXGISwapChain				*comSwapChain;             // the pointer to the swap chain interface
 	ID3D11Device				*comDevice;                     // the pointer to our Direct3D device interface
 
-	ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
-
-	ID3D11VertexShader			*comVertexShader;    // the vertex shader
-	ID3D11PixelShader			*comPixelShader;     // the pixel shader
-
-	ID3D11Buffer				*comIndexBuffer; 
-	ID3D11InputLayout			*comInputLayout;
-	ID3D11SamplerState			*comSamplerState;
-
 	ID3D11VertexShader			*fontVertexShader;    // the vertex shader
 	ID3D11PixelShader			*fontPixelShader;     // the pixel shader
 	ID3D11Buffer				*fontVertexBuffer; 
 	ID3D11Buffer				*fontIndexBuffer; 
 	ID3D11SamplerState			*fontAtlasSampler;
-	
-	static const int texturesNum = 3;
-	ID3D11ShaderResourceView	*textureShaderViews[texturesNum];
 };
