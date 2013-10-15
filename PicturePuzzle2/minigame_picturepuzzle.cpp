@@ -116,9 +116,10 @@ void MiniGamePicturePuzzle::Initialize()
 	InitPipeline();				//load & init shaders
     InitBuffers();				//creating render shape
 	//загружаем текстуры
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L"beyond.bmp", NULL, NULL, &textureShaderViews[0], NULL);
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L"fargus_souls.jpeg", NULL, NULL, &textureShaderViews[1], NULL);
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L"task_complete.png", NULL, NULL, &textureShaderViews[2], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\beyond.jpg", NULL, NULL, &textureShaderViews[0], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\fargus_souls.jpeg", NULL, NULL, &textureShaderViews[1], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\task_complete.png", NULL, NULL, &textureShaderViews[2], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\open_file-icon.gif", NULL, NULL, &textureShaderViews[3], NULL);
 }
 
 // this is the function that creates the shape to render
@@ -235,8 +236,8 @@ void MiniGamePicturePuzzle::InitPipeline()
 {
     // load and compile the two shaders
     ID3D10Blob *VS, *PS;
-	HRESULT h1 = D3DX11CompileFromFile(L"shaders_2d.hlsl", 0, 0, "TextureVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-    HRESULT h2 = D3DX11CompileFromFile(L"shaders_2d.hlsl", 0, 0, "TexturePixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
+	HRESULT h1 = D3DX11CompileFromFile(L".\\res\\shaders_2d.hlsl", 0, 0, "TextureVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+    HRESULT h2 = D3DX11CompileFromFile(L".\\res\\shaders_2d.hlsl", 0, 0, "TexturePixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 
     // encapsulate both shaders into shader objects
     comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &comVertexShader);
@@ -276,8 +277,8 @@ void MiniGamePicturePuzzle::InitPipeline()
     HRESULT result = comDevice->CreateSamplerState(&samplerDesc, &comSamplerState);
 
 	ID3D10Blob* FONT_VS_Buffer,*FONT_PS_Buffer;
-	h1 = D3DX11CompileFromFile(L"shaders_font.hlsl", 0, 0, "FONT_VS", "vs_5_0", 0, 0, 0, &FONT_VS_Buffer, 0, 0);
-    h2 = D3DX11CompileFromFile(L"shaders_font.hlsl", 0, 0, "FONT_PS", "ps_5_0", 0, 0, 0, &FONT_PS_Buffer, 0, 0);
+	h1 = D3DX11CompileFromFile(L".\\res\\shaders_font.hlsl", 0, 0, "FONT_VS", "vs_5_0", 0, 0, 0, &FONT_VS_Buffer, 0, 0);
+    h2 = D3DX11CompileFromFile(L".\\res\\shaders_font.hlsl", 0, 0, "FONT_PS", "ps_5_0", 0, 0, 0, &FONT_PS_Buffer, 0, 0);
 	comDevice->CreateVertexShader(FONT_VS_Buffer->GetBufferPointer(),FONT_VS_Buffer->GetBufferSize(),NULL,&fontVertexShader);
 	comDevice->CreatePixelShader(FONT_PS_Buffer->GetBufferPointer(),FONT_PS_Buffer->GetBufferSize(),NULL,&fontPixelShader);
 	comDeviceContext->VSSetShader(fontVertexShader, 0, 0);
