@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>       /* time */
+#include <math.h>       /* fmod */
 
 #include "minigameinterface.h"
 
@@ -30,6 +31,7 @@ struct VERTEX_TEXTURE
 //эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle...
 static const int				vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be  (cRows+1)*(cColumns+1);
 extern VERTEX_TEXTURE			RectangleVertices[vertexCount];
+extern D3DXVECTOR2				StandardTextCoords[vertexCount];
 extern ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
 extern ID3D11Buffer				*comVertexBuffer;
 extern Rect coordsScreen, coordsTexture;
@@ -52,7 +54,7 @@ private:
 
 	static const int indexCount = cRows*cColumns*6;
 	
-	D3DXVECTOR2 StandardTextCoords[vertexCount];
+
 
 	bool isFirstClick;
 	mutable bool flagGameFinished;

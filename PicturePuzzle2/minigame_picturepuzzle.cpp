@@ -1,9 +1,11 @@
 #include "minigame_picturepuzzle.h"
 
-Rect coordsScreen, coordsTexture;
+Rect coordsScreen,	coordsTexture;
+Rect coordsScreenNew, coordsTextureNew;
 VERTEX_TEXTURE			RectangleVertices[vertexCount];
+D3DXVECTOR2				StandardTextCoords[vertexCount];
 ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
-ID3D11Buffer			*comVertexBuffer; 
+ID3D11Buffer			*comVertexBuffer;
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -45,6 +47,17 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsTexture.bottom = 0.0f;
 	coordsTexture.right = 1.0f;
 	coordsTexture.top = 1.0f;
+
+	//screen coords should be between -1 & 1
+	coordsScreenNew.left = -1.0;
+	coordsScreenNew.right = 1.0;
+	coordsScreenNew.top = 1.0;
+	coordsScreenNew.bottom = -1.0;
+	//texture coords should be between 0 & 1
+	coordsTextureNew.left = 0.0;
+	coordsTextureNew.right = 1.0;
+	coordsTextureNew.top = 1.0;
+	coordsTextureNew.bottom = 0.0;
 
 	// create a struct to hold information about the swap chain
     DXGI_SWAP_CHAIN_DESC tempSwapChain;
@@ -301,6 +314,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 					ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
 					comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);  
 
+					//swap texture_coords[4] gropes
 					D3DXVECTOR2 buf[4];
 					buf[0]= RectangleVertices[previousCellNumber*4+0].texture;
 					buf[1]= RectangleVertices[previousCellNumber*4+1].texture;
@@ -338,11 +352,17 @@ bool MiniGamePicturePuzzle::IsComplete() const
 
 void MiniGamePicturePuzzle::Render() const
 {
-	Rect coordsScreenNew, coordsTextureNew;
-	coordsScreenNew.left = 0.0;
-	coordsScreenNew.right = 1.0;
-	coordsScreenNew.top = 0.0;
-	coordsScreenNew.bottom = -1.0;
+
+	/*uncomment to see some FUNNY effect :)
+	
+	//screen coords should be between -1 & 1
+	coordsScreenNew.left = fmod(coordsScreenNew.left+0.0001+1, 1) - 1;
+	coordsScreenNew.right = fmod(coordsScreenNew.right+0.0001+1, 1);
+	coordsScreenNew.top = fmod(coordsScreenNew.top+0.0001+1, 1);
+	coordsScreenNew.bottom = fmod(coordsScreenNew.bottom+0.0001+1, 1) - 1;
+	//texture coords should be between 0 & 1
+	*/
+
 	::Render(coordsScreenNew, 1, coordsTextureNew); //:: - means global namespace
 	// Set shader texture resource in the pixel shader.
 	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
@@ -393,19 +413,26 @@ void MiniGamePicturePuzzle::Render() const
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 {
+	// наверное, тут надо применять матрицы преобразований, но я так устал... :)
 	float levelCompressionCoordX = (screenCoords.right - screenCoords.left)/(coordsScreen.right - coordsScreen.left);
 	float levelCompressionCoordY = (screenCoords.top - screenCoords.bottom)/(coordsScreen.top - coordsScreen.bottom);
 	float levelShiftCoordX = screenCoords.left - coordsScreen.left;
 	float levelShiftCoordY = screenCoords.bottom - coordsScreen.bottom;
-	//float levelShiftCoordY = screenCoords.top - coordsScreen.top;
-	//0,1
-	//0,0
-	//1,0
-	//1,1
+	float levelCompressionTextureX = (textureCoords.right - textureCoords.left)/(coordsTexture.right - coordsTexture.left);
+	//float levelCompressionTextureY = (textureCoords.top - textureCoords.bottom)/(coordsTexture.top - coordsTexture.bottom);
+	float levelCompressionTextureY = (textureCoords.bottom - textureCoords.top)/(coordsTexture.bottom - coordsTexture.top);
+	float levelShiftTextureX = textureCoords.left - coordsTexture.left;
+	//float levelShiftTextureY = textureCoords.bottom - coordsTexture.bottom;
+	float levelShiftTextureY = textureCoords.top - coordsTexture.top;
+
 	for (int k = 0; k < vertexCount; k++)
 	{
 		RectangleVertices[k].position.x = (RectangleVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
 		RectangleVertices[k].position.y = (RectangleVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
+		RectangleVertices[k].texture.x = RectangleVertices[k].texture.x*levelCompressionTextureX + levelShiftTextureX;
+		RectangleVertices[k].texture.y = RectangleVertices[k].texture.y*levelCompressionTextureY + levelShiftTextureY;
+		StandardTextCoords[k].x = StandardTextCoords[k].x * levelCompressionTextureX + levelShiftTextureX;
+		StandardTextCoords[k].y = StandardTextCoords[k].y * levelCompressionTextureY + levelShiftTextureY;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE mappedSubRes;
