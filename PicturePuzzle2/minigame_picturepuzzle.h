@@ -62,10 +62,8 @@ private:
 	ID3D11Buffer				*comVertexBuffer; 
 	ID3D11Buffer				*comIndexBuffer; 
 	ID3D11InputLayout			*comInputLayout;
-	//ID3D11ShaderResourceView	*comTextureShaderView; // Объект текстуры
 	ID3D11SamplerState			*comSamplerState;
 
-	//ID3D11ShaderResourceView	*fontTextureShaderView;
 	ID3D11VertexShader			*fontVertexShader;    // the vertex shader
 	ID3D11PixelShader			*fontPixelShader;     // the pixel shader
 	ID3D11Buffer				*fontVertexBuffer; 
@@ -75,3 +73,6 @@ private:
 	static const int texturesNum = 3;
 	ID3D11ShaderResourceView	*textureShaderViews[texturesNum];
 };
+
+//эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle...
+extern Rect coordsScreen, coordsTexture;

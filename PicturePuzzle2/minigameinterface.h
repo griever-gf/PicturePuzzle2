@@ -20,7 +20,7 @@ public:
 public:
 	static const int cTextureId = 0;
 	static const int cColumns = 3;
-	static const int cRows = 3;
+	static const int cRows = 4;
 };
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoord);

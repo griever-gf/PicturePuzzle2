@@ -1,5 +1,7 @@
 #include "minigame_picturepuzzle.h"
 
+Rect coordsScreen, coordsTexture;
+
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
 	isFirstClick = false;
@@ -31,6 +33,17 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
 
 void MiniGamePicturePuzzle::Initialize()
 {// called before start
+	coordsScreen.left = -0.8f;
+	coordsScreen.bottom = -0.5f;
+	coordsScreen.right = 0.8f;
+	coordsScreen.top = 0.5f;
+		
+	coordsTexture.left = 0.0f;
+	coordsTexture.bottom = 0.0f;
+	coordsTexture.right = 1.0f;
+	coordsTexture.top = 1.0f;
+	//	, coordsTexture;
+
 	// create a struct to hold information about the swap chain
     DXGI_SWAP_CHAIN_DESC tempSwapChain;
 
@@ -97,10 +110,10 @@ void MiniGamePicturePuzzle::InitBuffers()
 	{
 		for (int j = 0; j < cColumns; j++)
 		{
-			ScreenCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*j    ), 1.0f - ((2.0f/cRows)*(i+1)), 0.0f);
-			ScreenCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*j    ), 1.0f - ((2.0f/cRows)*i    ), 0.0f);
-			ScreenCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*(j+1)), 1.0f - ((2.0f/cRows)*i    ), 0.0f);
-			ScreenCoordsArray[(i*cColumns+j)][3]= D3DXVECTOR3(-1.0f + ((2.0f/cColumns)*(j+1)), 1.0f - ((2.0f/cRows)*(i+1)), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*j    ), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*(i+1)), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*j    ), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*(j+1)), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][3] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*(j+1)), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*(i+1)), 0.0f);
 			TextCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR2((1.0f/cColumns)*(j+0), (1.0f/cRows)*(i+1));
 			TextCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR2((1.0f/cColumns)*(j+0), (1.0f/cRows)*i    );
 			TextCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR2((1.0f/cColumns)*(j+1), (1.0f/cRows)*i    );
@@ -258,21 +271,28 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 				isFirstClick = !isFirstClick;
 			
 				RECT rect;
-				int width = SCREEN_WIDTH;
-				int height = SCREEN_HEIGHT;
+				float width = SCREEN_WIDTH;
+				float height = SCREEN_HEIGHT;
 				if(GetClientRect(hWnd, &rect))
 				{
-				  width = rect.right - rect.left;
-				  height = rect.bottom - rect.top;
+				  width = (rect.right - rect.left)*((coordsScreen.right - coordsScreen.left)/2.0f);
+				  height = (rect.bottom - rect.top)*((coordsScreen.top - coordsScreen.bottom)/2.0f);
 				}
-				int x = ((int)x1) / (width/cColumns);
-				int y = ((int)y1) / (height/cRows);
+				float oneColumnSize = width/cColumns;
+				float oneRowSize = height/cRows;
+				float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
+				float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
+				//если кликнули не в прямоугольник - выходим
+				if (!((firstColumnCoordX<=x1)&&(firstColumnCoordX+width>=x1)&&(firstRowCoordY<=y1)&&(firstRowCoordY+height>=y1)))
+					return;
+				int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
+				int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
 
 				currentCellNumber = x + y*cColumns;
 
+				//std::wstringstream WStrStream;
 				//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
 				//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
-				//isFirstClick = true;
 				if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
 				{
 					D3D11_MAPPED_SUBRESOURCE mappedSubRes;
