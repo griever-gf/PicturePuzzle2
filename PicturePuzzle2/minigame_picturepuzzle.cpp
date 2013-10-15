@@ -33,16 +33,15 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
 
 void MiniGamePicturePuzzle::Initialize()
 {// called before start
-	coordsScreen.left = -0.8f;
-	coordsScreen.bottom = -0.5f;
-	coordsScreen.right = 0.8f;
-	coordsScreen.top = 0.5f;
+	coordsScreen.left = -1.0f;
+	coordsScreen.bottom = -1.0f;
+	coordsScreen.right = 1.0f;
+	coordsScreen.top = 1.0f;
 		
-	coordsTexture.left = 0.5f;
-	coordsTexture.bottom = 0.1f;
-	coordsTexture.right = 0.9f;
-	coordsTexture.top = 0.5f;
-	//	, coordsTexture;
+	coordsTexture.left = 0.0f;
+	coordsTexture.bottom = 0.0f;
+	coordsTexture.right = 1.0f;
+	coordsTexture.top = 1.0f;
 
 	// create a struct to hold information about the swap chain
     DXGI_SWAP_CHAIN_DESC tempSwapChain;
@@ -114,10 +113,10 @@ void MiniGamePicturePuzzle::InitBuffers()
 			ScreenCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*j    ), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*i    ), 0.0f);
 			ScreenCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*(j+1)), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*i    ), 0.0f);
 			ScreenCoordsArray[(i*cColumns+j)][3] = D3DXVECTOR3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*(j+1)), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*(i+1)), 0.0f);
-			TextCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+0)+coordsTexture.left, (1.0f/cRows)*(i+1));
-			TextCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+0)+coordsTexture.left, (1.0f/cRows)*(i+0));
-			TextCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+1)+coordsTexture.left, (1.0f/cRows)*(i+0));
-			TextCoordsArray[(i*cColumns+j)][3] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+1)+coordsTexture.left, (1.0f/cRows)*(i+1));
+			TextCoordsArray[(i*cColumns+j)][0] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+0)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+1)+coordsTexture.top);
+			TextCoordsArray[(i*cColumns+j)][1] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+0)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+0)+coordsTexture.top);
+			TextCoordsArray[(i*cColumns+j)][2] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+1)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+0)+coordsTexture.top);
+			TextCoordsArray[(i*cColumns+j)][3] = D3DXVECTOR2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+1)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+1)+coordsTexture.top);
 			indices[(i*cColumns+j)*6  ] = (i*cColumns+j)*4;
 			indices[(i*cColumns+j)*6+1] = (i*cColumns+j)*4+1;
 			indices[(i*cColumns+j)*6+2] = (i*cColumns+j)*4+3;
