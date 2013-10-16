@@ -51,22 +51,29 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsScreen.bottom = -1.0f;
 	coordsScreen.right = 1.0f;
 	coordsScreen.top = 1.0f;
-		
 	coordsTexture.left = 0.0f;
 	coordsTexture.bottom = 0.0f;
 	coordsTexture.right = 1.0f;
 	coordsTexture.top = 1.0f;
 
-	//screen coords should be between -1 & 1
 	coordsScreenNew.left = -1.0;
 	coordsScreenNew.right = 1.0;
 	coordsScreenNew.top = 1.0;
 	coordsScreenNew.bottom = -1.0;
-	//texture coords should be between 0 & 1
-	coordsTextureNew.left = 0.5;
+	coordsTextureNew.left = 0.0;
 	coordsTextureNew.right = 1.0;
 	coordsTextureNew.top = 1.0;
-	coordsTextureNew.bottom = 0.5;
+	coordsTextureNew.bottom = 0.0;
+
+	coordsLabel.left = -0.9;
+	coordsLabel.right = 0.9;
+	coordsLabel.top = 0.25;
+	coordsLabel.bottom = -0.25;
+
+	coordsIcon.left = -0.95;
+	coordsIcon.right = -0.8;
+	coordsIcon.top = 0.95;
+	coordsIcon.bottom = 0.75;
 
 	// create a struct to hold information about the swap chain
     DXGI_SWAP_CHAIN_DESC tempSwapChain;
@@ -119,7 +126,7 @@ void MiniGamePicturePuzzle::Initialize()
 	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\beyond.jpg", NULL, NULL, &textureShaderViews[0], NULL);
 	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\fargus_souls.jpeg", NULL, NULL, &textureShaderViews[1], NULL);
 	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\task_complete.png", NULL, NULL, &textureShaderViews[2], NULL);
-	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\open_file-icon.gif", NULL, NULL, &textureShaderViews[3], NULL);
+	D3DX11CreateShaderResourceViewFromFile(comDevice, L".\\res\\icon.png", NULL, NULL, &textureShaderViews[3], NULL);
 }
 
 // this is the function that creates the shape to render
@@ -213,10 +220,10 @@ void MiniGamePicturePuzzle::InitBuffers()
 	fontIndexBuffer = NULL;
 	textureShaderViews[1] = NULL;
 
-	VERTEX_TEXTURE LabelVertices[4] = { {D3DXVECTOR3(-0.9f,-0.25f,0.0f),D3DXVECTOR2(0.0f,1.0f)},
-										{D3DXVECTOR3(-0.9f,0.25f,0.0f),D3DXVECTOR2(0.0f,0.0f)},
-										{D3DXVECTOR3(0.9f,0.25f,0.0f),D3DXVECTOR2(1.0f,0.0f)},
-										{D3DXVECTOR3(0.9f,-0.25f,0.0f),D3DXVECTOR2(1.0f,1.0f)}};
+	VERTEX_TEXTURE LabelVertices[4] = { {D3DXVECTOR3(coordsLabel.left,coordsLabel.bottom,0.0f),D3DXVECTOR2(0.0f,1.0f)},
+										{D3DXVECTOR3(coordsLabel.left,coordsLabel.top,0.0f),D3DXVECTOR2(0.0f,0.0f)},
+										{D3DXVECTOR3(coordsLabel.right,coordsLabel.top,0.0f),D3DXVECTOR2(1.0f,0.0f)},
+										{D3DXVECTOR3(coordsLabel.right,coordsLabel.bottom,0.0f),D3DXVECTOR2(1.0f,1.0f)}};
 	vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * 4;
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -228,6 +235,16 @@ void MiniGamePicturePuzzle::InitBuffers()
 	indexBufferDesc.ByteWidth = sizeof(unsigned long) * 6;
 	indexData.pSysMem = label_indices;
 	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &fontIndexBuffer);
+
+	iconVertexBuffer = NULL;
+	textureShaderViews[4] = NULL;
+
+	VERTEX_TEXTURE IconVertices[4] = { {D3DXVECTOR3(coordsIcon.left,coordsIcon.bottom,0.0f),D3DXVECTOR2(0.0f,1.0f)},
+										{D3DXVECTOR3(coordsIcon.left,coordsIcon.top,0.0f),D3DXVECTOR2(0.0f,0.0f)},
+										{D3DXVECTOR3(coordsIcon.right,coordsIcon.top,0.0f),D3DXVECTOR2(1.0f,0.0f)},
+										{D3DXVECTOR3(coordsIcon.right,coordsIcon.bottom,0.0f),D3DXVECTOR2(1.0f,1.0f)}};
+	vertexData.pSysMem = IconVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &iconVertexBuffer);
 }
 
 
@@ -292,61 +309,75 @@ void MiniGamePicturePuzzle::InitPipeline()
 
 void MiniGamePicturePuzzle::Click(float x1, float y1)
 {
-	if (!flagGameFinished)
-			{
-				isFirstClick = !isFirstClick;
+	isFirstClick = !isFirstClick;
 			
-				RECT rect;
-				float width = SCREEN_WIDTH;
-				float height = SCREEN_HEIGHT;
-				if(GetClientRect(hWnd, &rect))
-				{
-				  width = (rect.right - rect.left)*((coordsScreen.right - coordsScreen.left)/2.0f);
-				  height = (rect.bottom - rect.top)*((coordsScreen.top - coordsScreen.bottom)/2.0f);
-				}
-				float oneColumnSize = width/cColumns;
-				float oneRowSize = height/cRows;
-				float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
-				float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
-				//если кликнули не в прямоугольник - выходим
-				if (!((firstColumnCoordX<=x1)&&(firstColumnCoordX+width>=x1)&&(firstRowCoordY<=y1)&&(firstRowCoordY+height>=y1)))
-					return;
-				int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
-				int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
-
-				currentCellNumber = x + y*cColumns;
-
-				//std::wstringstream WStrStream;
-				//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
-				//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
-				if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
-				{
-					D3D11_MAPPED_SUBRESOURCE mappedSubRes;
-					ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
-					comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);  
-
-					//swap texture_coords[4] gropes
-					D3DXVECTOR2 buf[4];
-					buf[0]= RectangleVertices[previousCellNumber*4+0].texture;
-					buf[1]= RectangleVertices[previousCellNumber*4+1].texture;
-					buf[2]= RectangleVertices[previousCellNumber*4+2].texture;
-					buf[3]= RectangleVertices[previousCellNumber*4+3].texture;
-					RectangleVertices[previousCellNumber*4+0].texture = RectangleVertices[currentCellNumber*4+0].texture;
-					RectangleVertices[previousCellNumber*4+1].texture = RectangleVertices[currentCellNumber*4+1].texture;
-					RectangleVertices[previousCellNumber*4+2].texture = RectangleVertices[currentCellNumber*4+2].texture;
-					RectangleVertices[previousCellNumber*4+3].texture = RectangleVertices[currentCellNumber*4+3].texture;
-					RectangleVertices[currentCellNumber*4+0].texture = buf[0];
-					RectangleVertices[currentCellNumber*4+1].texture = buf[1];
-					RectangleVertices[currentCellNumber*4+2].texture = buf[2];
-					RectangleVertices[currentCellNumber*4+3].texture = buf[3];
+	RECT rect;
+	float width = SCREEN_WIDTH;
+	float height = SCREEN_HEIGHT;
+	if(GetClientRect(hWnd, &rect))
+	{
+		width = (rect.right - rect.left)*((coordsScreen.right - coordsScreen.left)/2.0f);
+		height = (rect.bottom - rect.top)*((coordsScreen.top - coordsScreen.bottom)/2.0f);
+	}
+	float oneColumnSize = width/cColumns;
+	float oneRowSize = height/cRows;
+	float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
+	float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
+	//если кликнули не в прямоугольник - выходим
+	if (!((firstColumnCoordX<=x1)&&(firstColumnCoordX+width>=x1)&&(firstRowCoordY<=y1)&&(firstRowCoordY+height>=y1)))
+		return;
+	float centerx = width*((coordsIcon.right+coordsIcon.left+2)/4);
+	float centery = height*(1 - (coordsIcon.top+coordsIcon.bottom+2)/4);
+	float radiusx = width*((coordsIcon.right - coordsIcon.left)/2);
+	float radiusy = height*((coordsIcon.top - coordsIcon.bottom)/2);
+	//if point inside the circle icon...
+	if (((x1 - centerx)*(x1 - centerx) + (y1 - centery)*(y1 - centery)) < radiusx*radiusy)
+	{
+		std::wstringstream WStrStream;
+		WStrStream << "inside a circle!";
+		MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+		return;
+	}
+	//(x - center_x)^2 + (y - center_y)^2 < radius^2
 				
-					//понятное дело, что лучше обновить часть вертексного буфера, чем буфер целиком, но у меня не получилось :(
-					//пытался копать CopySubresourceRegion, но...
-					memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));  
-					comDeviceContext->Unmap(comVertexBuffer, NULL);
-				}
-				previousCellNumber = currentCellNumber;
-			}
+	if (!flagGameFinished)
+	{
+	int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
+	int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
+
+	currentCellNumber = x + y*cColumns;
+
+	//std::wstringstream WStrStream;
+	//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
+	//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+	if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
+	{
+		D3D11_MAPPED_SUBRESOURCE mappedSubRes;
+		ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+		comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);  
+
+		//swap texture_coords[4] gropes
+		D3DXVECTOR2 buf[4];
+		buf[0]= RectangleVertices[previousCellNumber*4+0].texture;
+		buf[1]= RectangleVertices[previousCellNumber*4+1].texture;
+		buf[2]= RectangleVertices[previousCellNumber*4+2].texture;
+		buf[3]= RectangleVertices[previousCellNumber*4+3].texture;
+		RectangleVertices[previousCellNumber*4+0].texture = RectangleVertices[currentCellNumber*4+0].texture;
+		RectangleVertices[previousCellNumber*4+1].texture = RectangleVertices[currentCellNumber*4+1].texture;
+		RectangleVertices[previousCellNumber*4+2].texture = RectangleVertices[currentCellNumber*4+2].texture;
+		RectangleVertices[previousCellNumber*4+3].texture = RectangleVertices[currentCellNumber*4+3].texture;
+		RectangleVertices[currentCellNumber*4+0].texture = buf[0];
+		RectangleVertices[currentCellNumber*4+1].texture = buf[1];
+		RectangleVertices[currentCellNumber*4+2].texture = buf[2];
+		RectangleVertices[currentCellNumber*4+3].texture = buf[3];
+				
+		//понятное дело, что лучше обновить часть вертексного буфера, чем буфер целиком, но у меня не получилось :(
+		//пытался копать CopySubresourceRegion, но...
+		memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));  
+		comDeviceContext->Unmap(comVertexBuffer, NULL);
+	}
+	previousCellNumber = currentCellNumber;
+}
 }
 
 bool MiniGamePicturePuzzle::IsComplete() const
@@ -379,6 +410,16 @@ void MiniGamePicturePuzzle::Render() const
 	//comment lower string to see some FUNNY effect :)
 	txtID = 0;
 	::Render(coordsScreenNew, txtID / 300, coordsTextureNew); //рендер фона, :: - means global namespace
+
+	comDeviceContext->VSSetShader(fontVertexShader,0,0);
+	comDeviceContext->PSSetShader(fontPixelShader,0,0);
+	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[3]);
+	UINT stride = sizeof(VERTEX_TEXTURE);
+	UINT offset = 0;
+	comDeviceContext->IASetVertexBuffers(0, 1, &iconVertexBuffer, &stride, &offset);
+	comDeviceContext->IASetIndexBuffer(fontIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	comDeviceContext->PSSetSamplers(0,1,&fontAtlasSampler);
+	comDeviceContext->DrawIndexed(6, 0, 0);
 
 	if (IsComplete()) //render "complete" label
 	{

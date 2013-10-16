@@ -63,6 +63,7 @@ private:
 	void InitPipeline(void);
 	void InitBuffers(void);
 
+	Rect	coordsLabel, coordsIcon;
 
 	mutable int txtID;
 
@@ -78,4 +79,6 @@ private:
 	ID3D11Buffer				*fontVertexBuffer; 
 	ID3D11Buffer				*fontIndexBuffer; 
 	ID3D11SamplerState			*fontAtlasSampler;
+
+	ID3D11Buffer				*iconVertexBuffer;
 };
