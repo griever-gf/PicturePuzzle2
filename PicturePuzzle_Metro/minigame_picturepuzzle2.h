@@ -1,12 +1,15 @@
 #include "pch.h"
 
 #include "minigameinterface.h"
+#include "BasicReaderWriter.h"
 #include <fstream>
+//#include <iostream>
+//#include <sstream>
 
 #include <D3Dcompiler.h>
 //#pragma comment(lib, "D3Dcompiler.lib")
 
-//#pragma once
+#pragma once
 
 using namespace Microsoft::WRL;
 using namespace Windows::UI::Core;
@@ -18,10 +21,16 @@ struct VERTEX_TEXTURE
 	XMFLOAT2 texture;
 };
 
+struct VERTEX
+{
+	XMFLOAT3 position;
+};
+
 extern ComPtr<ID3D11DeviceContext1>		comDeviceContext;    // the device context interface
 extern ComPtr<ID3D11Buffer>				comVertexBuffer;
 extern ComPtr<ID3D11VertexShader>		comVertexShader;
 extern ComPtr<ID3D11PixelShader>		comPixelShader;
+extern ComPtr<ID3D11InputLayout>		comInputLayout;    // the input layout interface
 
 class MiniGamePicturePuzzle : public MiniGame
 {

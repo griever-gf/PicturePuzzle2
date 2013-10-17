@@ -5,6 +5,7 @@ ComPtr<ID3D11DeviceContext1>	comDeviceContext;
 ComPtr<ID3D11Buffer>			comVertexBuffer;
 ComPtr<ID3D11VertexShader>		comVertexShader;
 ComPtr<ID3D11PixelShader>		comPixelShader;
+ComPtr<ID3D11InputLayout>		comInputLayout;  
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -22,8 +23,8 @@ void MiniGamePicturePuzzle::Initialize()
     ComPtr<ID3D11Device> dev11;
     ComPtr<ID3D11DeviceContext> devcon11;
 
-	//D3D_FEATURE_LEVEL levelFeature = D3D_FEATURE_LEVEL_9_1;
 	// Create the device and device context objects
+	//D3D_FEATURE_LEVEL levelFeature = D3D_FEATURE_LEVEL_9_1;
     HRESULT h =  D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &dev11, nullptr/*&levelFeature*/, &devcon11);
     
     // Convert the pointers from the DirectX 11 versions to the DirectX 11.1 versions
@@ -65,20 +66,41 @@ void MiniGamePicturePuzzle::Initialize()
 
     // create a render target pointing to the back buffer
     comDevice->CreateRenderTargetView(backbuffer.Get(), nullptr, &comRendertarget);
+
+	// set the viewport
+    D3D11_VIEWPORT viewport = {0};
+
+    viewport.TopLeftX = 0;
+    viewport.TopLeftY = 0;
+    viewport.Width = Window->Bounds.Width;
+    viewport.Height = Window->Bounds.Height;
+
+    comDeviceContext->RSSetViewports(1, &viewport);
+
+	// initialize graphics and the pipeline
+    InitBuffers();
+    InitPipeline();
 }
 
 // this is the function that creates the shape to render
 void MiniGamePicturePuzzle::InitBuffers()
 {
-	VERTEX_TEXTURE OurVertices[] =
+	/*VERTEX_TEXTURE OurVertices[] =
     {
         { XMFLOAT3(0.0f, 0.5f, 0.0f), XMFLOAT2(0.0f,1.0f) },
         { XMFLOAT3(0.45f, -0.5f, 0.0f), XMFLOAT2(0.0f,0.0f) },
         { XMFLOAT3(-0.45f, -0.5f, 0.0f), XMFLOAT2(1.0f,0.0f) },
+    };*/
+	VERTEX OurVertices[] =
+    {
+        { XMFLOAT3(0.0f, 0.5f, 0.0f) },
+        { XMFLOAT3(0.45f, -0.5f, 0.0f) },
+        { XMFLOAT3(-0.45f, -0.5f, 0.0f) },
     };
 
 	D3D11_BUFFER_DESC vertexBufferDesc = {0};
-    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * ARRAYSIZE(OurVertices);
+    //vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * ARRAYSIZE(OurVertices);
+	 vertexBufferDesc.ByteWidth = sizeof(VERTEX) * ARRAYSIZE(OurVertices);
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufferDesc.CPUAccessFlags = 0;
@@ -92,22 +114,67 @@ void MiniGamePicturePuzzle::InitBuffers()
 // this function loads and prepares the shaders
 void MiniGamePicturePuzzle::InitPipeline()
 {
+	// Create a Basic Reader-Writer class to load data from disk.  This class is examined
+    // in the Resource Loading sample.
+    BasicReaderWriter^ reader = ref new BasicReaderWriter();
+
     // load the shader files
-    //Array<byte>^ VSFile = LoadShaderFile("VertexShader.cso");
-    //Array<byte>^ PSFile = LoadShaderFile("PixelShader.cso");
-	ID3D10Blob *VS, *PS;
+	//ID3D10Blob *VS, *PS;
 
 	// You can use this API to develop your Windows Store apps, but you can't use it in apps that you submit to the Windows Store.
-	HRESULT h1 = D3DCompileFromFile(L".\\res\\shaders_2d.hlsl", NULL, NULL, NULL, "vs_5_0", 0, 0, &VS, nullptr);
-    HRESULT h2 = D3DCompileFromFile(L".\\res\\shaders_2d.hlsl", NULL, NULL, NULL, "ps_5_0", 0, 0, &PS, nullptr);
+	//HRESULT h1 = D3DCompileFromFile(L".\\res\\shaders_2d.hlsl", NULL, NULL, NULL, "vs_5_0", 0, 0, &VS, nullptr);
+    //HRESULT h2 = D3DCompileFromFile(L".\\res\\shaders_2d.hlsl", NULL, NULL, NULL, "ps_5_0", 0, 0, &PS, nullptr);
+	// load the shader files
+    //Array<byte>^ VSFile = LoadShaderFile("VertexShader.cso");
+    //Array<byte>^ PSFile = LoadShaderFile("PixelShader.cso");
+	//D3DReadFileToBlob(L"VertexShadercso", &VS);
+	//D3DReadFileToBlob(L"PixelShader.cso", &PS);
+	auto vertexShaderBytecode = reader->ReadData("VertexShader.cso");
+	HRESULT H1 = comDevice->CreateVertexShader(vertexShaderBytecode->Data, vertexShaderBytecode->Length, nullptr, &comVertexShader);
+	auto pixelShaderBytecode = reader->ReadData("PixelShader.cso");
+	H1= comDevice->CreatePixelShader(pixelShaderBytecode->Data, pixelShaderBytecode->Length, nullptr, &comPixelShader);
+
+	/*std::ifstream vs_stream;
+	size_t vs_size;
+	char* vs_data;
+
+	vs_stream.open("VertexShader.cso", std::ifstream::in | std::ifstream::binary);
+	if(vs_stream.good())
+	{
+		vs_stream.seekg(0, std::ios::end);
+		vs_size = size_t(vs_stream.tellg());
+		vs_data = new char[vs_size];
+		vs_stream.seekg(0, std::ios::beg);
+		vs_stream.read(&vs_data[0], vs_size);
+		vs_stream.close();
+
+		HRESULT H1 = comDevice->CreateVertexShader(&vs_data, vs_size, 0, &comVertexShader);
+		HRESULT H2 = H1+1;
+	}*/
+
+	//vertexShaderBytecode = reader->ReadData("PixelShader.cso");
+	//comDevice->CreateVertexShader(vertexShaderBytecode->Data, vertexShaderBytecode->Length, nullptr, &comPixelShader);
 
 	// create the shader objects
-    comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), nullptr, &comVertexShader);
-    comDevice->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), nullptr, &comPixelShader);
+    //comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), nullptr, &comVertexShader);
+    //comDevice->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), nullptr, &comPixelShader);
+	// create the shader objects
+    //comDevice->CreateVertexShader(VSFile->Data, VSFile->Length, nullptr, &comVertexShader);
+    //comDevice->CreatePixelShader(PSFile->Data, PSFile->Length, nullptr, &comPixelShader);
 
 	// set the shader objects as the active shaders
     comDeviceContext->VSSetShader(comVertexShader.Get(), nullptr, 0);
     comDeviceContext->PSSetShader(comPixelShader.Get(), nullptr, 0);
+
+	// create the input layout object
+    D3D11_INPUT_ELEMENT_DESC myInputLayout[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        //{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+
+    H1 = comDevice->CreateInputLayout(myInputLayout, ARRAYSIZE(myInputLayout), vertexShaderBytecode->Data, vertexShaderBytecode->Length, &comInputLayout);
+	comDeviceContext->IASetInputLayout(comInputLayout.Get());
 }
 
 void MiniGamePicturePuzzle::Click(float x1, float y1)
@@ -128,6 +195,18 @@ void MiniGamePicturePuzzle::Render() const
 	 // clear the back buffer to a deep blue
     float color[4] = {0.0f, 0.2f, 0.4f, 1.0f};
     comDeviceContext->ClearRenderTargetView(comRendertarget.Get(), color);
+
+	// set the vertex buffer
+    //UINT stride = sizeof(VERTEX_TEXTURE);
+	UINT stride = sizeof(VERTEX);
+    UINT offset = 0;
+	comDeviceContext->IASetVertexBuffers(0, 1, comVertexBuffer.GetAddressOf(), &stride, &offset);
+
+	// set the primitive topology
+    comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	 // draw 3 vertices, starting from vertex 0
+    comDeviceContext->Draw(3, 0);
 
 	// switch the back buffer and the front buffer
     comSwapChain->Present(1, 0);
