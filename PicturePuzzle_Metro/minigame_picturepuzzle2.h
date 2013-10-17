@@ -21,16 +21,12 @@ struct VERTEX_TEXTURE
 	XMFLOAT2 texture;
 };
 
-struct VERTEX
-{
-	XMFLOAT3 position;
-};
-
 extern ComPtr<ID3D11DeviceContext1>		comDeviceContext;    // the device context interface
 extern ComPtr<ID3D11Buffer>				comVertexBuffer;
 extern ComPtr<ID3D11VertexShader>		comVertexShader;
 extern ComPtr<ID3D11PixelShader>		comPixelShader;
 extern ComPtr<ID3D11InputLayout>		comInputLayout;    // the input layout interface
+extern ComPtr<ID3D11SamplerState>		comSamplerState;
 
 class MiniGamePicturePuzzle : public MiniGame
 {

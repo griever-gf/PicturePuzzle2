@@ -5,7 +5,8 @@ ComPtr<ID3D11DeviceContext1>	comDeviceContext;
 ComPtr<ID3D11Buffer>			comVertexBuffer;
 ComPtr<ID3D11VertexShader>		comVertexShader;
 ComPtr<ID3D11PixelShader>		comPixelShader;
-ComPtr<ID3D11InputLayout>		comInputLayout;  
+ComPtr<ID3D11InputLayout>		comInputLayout; 
+ComPtr<ID3D11SamplerState>		comSamplerState;
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -85,22 +86,22 @@ void MiniGamePicturePuzzle::Initialize()
 // this is the function that creates the shape to render
 void MiniGamePicturePuzzle::InitBuffers()
 {
-	/*VERTEX_TEXTURE OurVertices[] =
+	VERTEX_TEXTURE OurVertices[] =
     {
         { XMFLOAT3(0.0f, 0.5f, 0.0f), XMFLOAT2(0.0f,1.0f) },
         { XMFLOAT3(0.45f, -0.5f, 0.0f), XMFLOAT2(0.0f,0.0f) },
         { XMFLOAT3(-0.45f, -0.5f, 0.0f), XMFLOAT2(1.0f,0.0f) },
-    };*/
-	VERTEX OurVertices[] =
+    };
+	/*VERTEX OurVertices[] =
     {
         { XMFLOAT3(0.0f, 0.5f, 0.0f) },
         { XMFLOAT3(0.45f, -0.5f, 0.0f) },
         { XMFLOAT3(-0.45f, -0.5f, 0.0f) },
-    };
+    };*/
 
 	D3D11_BUFFER_DESC vertexBufferDesc = {0};
-    //vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * ARRAYSIZE(OurVertices);
-	 vertexBufferDesc.ByteWidth = sizeof(VERTEX) * ARRAYSIZE(OurVertices);
+    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * ARRAYSIZE(OurVertices);
+	 //vertexBufferDesc.ByteWidth = sizeof(VERTEX) * ARRAYSIZE(OurVertices);
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufferDesc.CPUAccessFlags = 0;
@@ -170,11 +171,29 @@ void MiniGamePicturePuzzle::InitPipeline()
     D3D11_INPUT_ELEMENT_DESC myInputLayout[] =
     {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        //{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
     H1 = comDevice->CreateInputLayout(myInputLayout, ARRAYSIZE(myInputLayout), vertexShaderBytecode->Data, vertexShaderBytecode->Length, &comInputLayout);
 	comDeviceContext->IASetInputLayout(comInputLayout.Get());
+
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.MipLODBias = 0.0f;
+    samplerDesc.MaxAnisotropy = 1;
+    samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+    samplerDesc.MinLOD = 0;
+    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+    HRESULT result = comDevice->CreateSamplerState(&samplerDesc, &comSamplerState);
 }
 
 void MiniGamePicturePuzzle::Click(float x1, float y1)
@@ -197,8 +216,8 @@ void MiniGamePicturePuzzle::Render() const
     comDeviceContext->ClearRenderTargetView(comRendertarget.Get(), color);
 
 	// set the vertex buffer
-    //UINT stride = sizeof(VERTEX_TEXTURE);
-	UINT stride = sizeof(VERTEX);
+    UINT stride = sizeof(VERTEX_TEXTURE);
+	//UINT stride = sizeof(VERTEX);
     UINT offset = 0;
 	comDeviceContext->IASetVertexBuffers(0, 1, comVertexBuffer.GetAddressOf(), &stride, &offset);
 
