@@ -23,5 +23,9 @@ public:
 private:
 	void InitPipeline(void);
 	void InitBuffers(void);
-	ComPtr<ID3D11Device1> comDevice;              // the device interface
+	//ComPtr<ID3D11Device1> comDevice;              // the device interface
+	ComPtr<ID3D11Device1> comDevice;
+	ComPtr<IDXGISwapChain1> comSwapChain;
+	//IDXGISwapChain				*comSwapChain;             // the pointer to the swap chain interface
+	//ID3D11Device				*comDevice; 
 };
