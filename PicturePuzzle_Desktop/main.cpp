@@ -79,7 +79,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
             } break;
 			
 		case WM_LBUTTONDOWN: //on mouse click
-				PuzzleGame->Click(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+				PuzzleGame->Click((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
 			break;
     }
 

@@ -56,24 +56,24 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsTexture.right = 1.0f;
 	coordsTexture.top = 1.0f;
 
-	coordsScreenNew.left = -1.0;
-	coordsScreenNew.right = 1.0;
-	coordsScreenNew.top = 1.0;
-	coordsScreenNew.bottom = -1.0;
-	coordsTextureNew.left = 0.0;
-	coordsTextureNew.right = 1.0;
-	coordsTextureNew.top = 1.0;
-	coordsTextureNew.bottom = 0.0;
+	coordsScreenNew.left = -1.0f;
+	coordsScreenNew.right = 1.0f;
+	coordsScreenNew.top = 1.0f;
+	coordsScreenNew.bottom = -1.0f;
+	coordsTextureNew.left = 0.0f;
+	coordsTextureNew.right = 1.0f;
+	coordsTextureNew.top = 1.0f;
+	coordsTextureNew.bottom = 0.0f;
 
-	coordsLabel.left = -0.9;
-	coordsLabel.right = 0.9;
-	coordsLabel.top = 0.25;
-	coordsLabel.bottom = -0.25;
+	coordsLabel.left = -0.9f;
+	coordsLabel.right = 0.9f;
+	coordsLabel.top = 0.25f;
+	coordsLabel.bottom = -0.25f;
 
-	coordsIcon.left = -0.95;
-	coordsIcon.right = -0.8;
-	coordsIcon.top = 0.95;
-	coordsIcon.bottom = 0.75;
+	coordsIcon.left = -0.95f;
+	coordsIcon.right = -0.8f;
+	coordsIcon.top = 0.95f;
+	coordsIcon.bottom = 0.75f;
 
 	// create a struct to hold information about the swap chain
     DXGI_SWAP_CHAIN_DESC tempSwapChain;
@@ -163,7 +163,7 @@ void MiniGamePicturePuzzle::InitBuffers()
 	for (int i=0; i< vertexCount; i++)
 		StandardTextCoords[i] = TextCoordsArray[i/4][i%4];
 	// shuffle texture coordinates (by group of 4)
-	srand (time(NULL));
+	srand ((unsigned int)time(NULL));
 	D3DXVECTOR2 t1, t2;
     for(int i = 0; i < 100; i++){ // 100 is just a big number
         for(int k=0;k<(vertexCount/4);k++){
