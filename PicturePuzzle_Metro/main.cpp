@@ -1,6 +1,6 @@
 // Include the precompiled headers
 #include "pch.h"
-#include "minigame_picturepuzzle.h"
+#include "minigame_picturepuzzle2.h"
 
 #include <sstream>
 //#include <math.h>
@@ -19,10 +19,13 @@ using namespace Platform;
 // the class definition for the core "framework" of our app
 ref class Game sealed : public IFrameworkView
 {
+	MiniGamePicturePuzzle* PuzzleGame;
+	bool WindowClosed;
 public:
     // some functions called by Windows
     virtual void Initialize(CoreApplicationView^ AppView)
     {
+		WindowClosed = false;
         // set the OnActivated function to handle to Activated "event"
         AppView->Activated += ref new TypedEventHandler<CoreApplicationView^, IActivatedEventArgs^>(this, &Game::OnActivated);
     }
@@ -33,11 +36,20 @@ public:
     virtual void Load(String^ EntryPoint) {}
     virtual void Run()
 	{
+		PuzzleGame = new MiniGamePicturePuzzle;
+		// Initialize and run the system object.
+		//PuzzleGame->hWnd = hWnd;
+		PuzzleGame->Initialize();
+
 		// Obtain a pointer to the window
         CoreWindow^ Window = CoreWindow::GetForCurrentThread();
 
+		while(!WindowClosed)
+        {
         // Run ProcessEvents() to dispatch events
-		Window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessUntilQuit);
+			Window->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessAllIfPresent);
+			PuzzleGame->Render();
+		}
 	}
     virtual void Uninitialize() {}
         

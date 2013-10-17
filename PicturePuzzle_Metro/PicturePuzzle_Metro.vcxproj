@@ -122,12 +122,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
-    <ClInclude Include="minigame_picturepuzzle.h" />
+    <ClInclude Include="minigame_picturepuzzle2.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="minigame_picturepuzzle.cpp" />
+    <ClCompile Include="minigame_picturepuzzle2.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
