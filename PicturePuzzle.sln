@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PicturePuzzle_Desktop", "PicturePuzzle_Desktop\PicturePuzzle.vcxproj", "{8186AF4E-F383-48E8-9BE3-5A1B2E0FF545}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PicturePuzzle_Metro", "PicturePuzzle_Metro\PicturePuzzle_Metro.vcxproj", "{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -25,6 +27,24 @@ Global
 		{8186AF4E-F383-48E8-9BE3-5A1B2E0FF545}.Release|Win32.Build.0 = Release|Win32
 		{8186AF4E-F383-48E8-9BE3-5A1B2E0FF545}.Release|x64.ActiveCfg = Release|x64
 		{8186AF4E-F383-48E8-9BE3-5A1B2E0FF545}.Release|x64.Build.0 = Release|x64
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|ARM.ActiveCfg = Debug|ARM
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|ARM.Build.0 = Debug|ARM
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|ARM.Deploy.0 = Debug|ARM
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|Win32.Build.0 = Debug|Win32
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|Win32.Deploy.0 = Debug|Win32
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|x64.ActiveCfg = Debug|x64
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|x64.Build.0 = Debug|x64
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Debug|x64.Deploy.0 = Debug|x64
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|ARM.ActiveCfg = Release|ARM
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|ARM.Build.0 = Release|ARM
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|ARM.Deploy.0 = Release|ARM
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|Win32.ActiveCfg = Release|Win32
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|Win32.Build.0 = Release|Win32
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|Win32.Deploy.0 = Release|Win32
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|x64.ActiveCfg = Release|x64
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|x64.Build.0 = Release|x64
+		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|x64.Deploy.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
