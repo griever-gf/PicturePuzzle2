@@ -36,6 +36,11 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 	
 }
 
+bool MiniGamePicturePuzzle::IsComplete() const
+{
+	return true;
+}
+
 void MiniGamePicturePuzzle::Render() const
 {
 	

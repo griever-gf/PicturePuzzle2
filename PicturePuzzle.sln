@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PicturePuzzle_Desktop", "Pi
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PicturePuzzle_Metro", "PicturePuzzle_Metro\PicturePuzzle_Metro.vcxproj", "{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PicturePuzzle_SharedCode", "PicturePuzzle_SharedCode\PicturePuzzle_SharedCode.vcxproj", "{D5D9AB37-5348-478F-8774-D37825248AB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -45,6 +47,14 @@ Global
 		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|x64.ActiveCfg = Release|x64
 		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|x64.Build.0 = Release|x64
 		{34DF502B-799E-4BF0-A8C9-41434D5AFBC9}.Release|x64.Deploy.0 = Release|x64
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Debug|ARM.ActiveCfg = Debug|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Debug|Win32.Build.0 = Debug|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Debug|x64.ActiveCfg = Debug|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Release|ARM.ActiveCfg = Release|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Release|Win32.ActiveCfg = Release|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Release|Win32.Build.0 = Release|Win32
+		{D5D9AB37-5348-478F-8774-D37825248AB3}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,6 @@
 #include "pch.h"
+
+#include "minigameinterface.h"
 #pragma once
 
 using namespace Microsoft::WRL;
@@ -7,7 +9,7 @@ using namespace DirectX;
 
 extern ComPtr<ID3D11DeviceContext1> comDeviceContext;    // the device context interface
 
-class MiniGamePicturePuzzle 
+class MiniGamePicturePuzzle : public MiniGame
 {
 public:
     MiniGamePicturePuzzle();

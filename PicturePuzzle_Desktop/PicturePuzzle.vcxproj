@@ -130,7 +130,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);..\PicturePuzzle_SharedCode</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -224,7 +224,6 @@
   <ItemGroup>
     <ClInclude Include="main.h" />
     <ClInclude Include="minigame_picturepuzzle.h" />
-    <ClInclude Include="minigameinterface.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
