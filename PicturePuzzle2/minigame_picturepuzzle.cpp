@@ -495,7 +495,7 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 	comDeviceContext->IASetIndexBuffer(comIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
     // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
-	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //should switch to trianglestrip....
 
 	comDeviceContext->VSSetShader(comVertexShader, NULL, 0);
 	comDeviceContext->PSSetShader(comPixelShader, NULL, 0);
