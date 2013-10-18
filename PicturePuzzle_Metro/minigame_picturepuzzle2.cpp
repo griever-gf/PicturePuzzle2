@@ -1,12 +1,13 @@
 #include "pch.h"
 #include "minigame_picturepuzzle2.h"
 
-ComPtr<ID3D11DeviceContext1>	comDeviceContext;
-ComPtr<ID3D11Buffer>			comVertexBuffer;
-ComPtr<ID3D11VertexShader>		comVertexShader;
-ComPtr<ID3D11PixelShader>		comPixelShader;
-ComPtr<ID3D11InputLayout>		comInputLayout; 
-ComPtr<ID3D11SamplerState>		comSamplerState;
+ComPtr<ID3D11DeviceContext1>		comDeviceContext;
+ComPtr<ID3D11Buffer>				comVertexBuffer;
+ComPtr<ID3D11VertexShader>			comVertexShader;
+ComPtr<ID3D11PixelShader>			comPixelShader;
+ComPtr<ID3D11InputLayout>			comInputLayout; 
+ComPtr<ID3D11SamplerState>			comSamplerState;
+ComPtr<ID3D11ShaderResourceView>	textureShaderViews[3];
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -27,6 +28,7 @@ void MiniGamePicturePuzzle::Initialize()
 	// Create the device and device context objects
 	//D3D_FEATURE_LEVEL levelFeature = D3D_FEATURE_LEVEL_9_1;
     HRESULT h =  D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &dev11, nullptr/*&levelFeature*/, &devcon11);
+	//D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &comDevice, nullptr/*&levelFeature*/, &comDeviceContext);
     
     // Convert the pointers from the DirectX 11 versions to the DirectX 11.1 versions
 	dev11.As(&comDevice);
@@ -77,6 +79,10 @@ void MiniGamePicturePuzzle::Initialize()
     viewport.Height = Window->Bounds.Height;
 
     comDeviceContext->RSSetViewports(1, &viewport);
+
+	//D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Desktop\\res\\beyond.jpg", NULL, NULL, &textureShaderViews[0], NULL);
+	//HRESULT	result = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L"..\\..\\..\\PicturePuzzle_SharedCode\\res\\beyond.jpg", NULL, &textureShaderViews[0], 2048);
+	HRESULT	result = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\beyond.jpg", NULL, &textureShaderViews[0], 2048);
 
 	// initialize graphics and the pipeline
     InitBuffers();
@@ -208,6 +214,9 @@ bool MiniGamePicturePuzzle::IsComplete() const
 
 void MiniGamePicturePuzzle::Render() const
 {
+	// Set shader texture resource in the pixel shader.
+	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
+
 	// set our new render target object as the active render target
     comDeviceContext->OMSetRenderTargets(1, comRendertarget.GetAddressOf(), nullptr);
 
@@ -223,6 +232,12 @@ void MiniGamePicturePuzzle::Render() const
 
 	// set the primitive topology
     comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0);
+	comDeviceContext->PSSetShader(comPixelShader.Get(), NULL, 0);
+
+	// Set the sampler state in the pixel shader.
+	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);
 
 	 // draw 3 vertices, starting from vertex 0
     comDeviceContext->Draw(3, 0);

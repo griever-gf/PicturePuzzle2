@@ -1,13 +1,10 @@
 #include "pch.h"
 
 #include "minigameinterface.h"
-#include "BasicReaderWriter.h"
+#include "BasicReaderWriter.h" //shader files reading
+#include "WICTextureLoader.h" //image to texture converting (because D3DX11CreateShaderResourceViewFromFile is deprecated :( )
 #include <fstream>
-//#include <iostream>
-//#include <sstream>
 
-#include <D3Dcompiler.h>
-//#pragma comment(lib, "D3Dcompiler.lib")
 
 #pragma once
 
@@ -27,6 +24,8 @@ extern ComPtr<ID3D11VertexShader>		comVertexShader;
 extern ComPtr<ID3D11PixelShader>		comPixelShader;
 extern ComPtr<ID3D11InputLayout>		comInputLayout;    // the input layout interface
 extern ComPtr<ID3D11SamplerState>		comSamplerState;
+extern ComPtr<ID3D11ShaderResourceView>	textureShaderViews[3];
+static const int texturesNum		= 4;
 
 class MiniGamePicturePuzzle : public MiniGame
 {
@@ -42,10 +41,7 @@ public:
 private:
 	void InitPipeline(void);
 	void InitBuffers(void);
-	//ComPtr<ID3D11Device1> comDevice;              // the device interface
 	ComPtr<ID3D11Device1> comDevice;
 	ComPtr<IDXGISwapChain1> comSwapChain;
-	ComPtr<ID3D11RenderTargetView> comRendertarget;    
-	//IDXGISwapChain				*comSwapChain;             // the pointer to the swap chain interface
-	//ID3D11Device				*comDevice; 
+	ComPtr<ID3D11RenderTargetView> comRendertarget;
 };
