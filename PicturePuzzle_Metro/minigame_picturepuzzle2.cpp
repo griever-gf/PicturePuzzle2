@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "minigame_picturepuzzle2.h"
 
+Rect						coordsScreen,	coordsTexture;
+Rect						coordsScreenNew, coordsTextureNew;
+VERTEX_TEXTURE				RectangleVertices[vertexCount];
+XMFLOAT2					StandardTextCoords[vertexCount];
 ComPtr<ID3D11DeviceContext1>		comDeviceContext;
 ComPtr<ID3D11RenderTargetView>		comBackBuffer;
 ComPtr<ID3D11Buffer>				comVertexBuffer;
@@ -23,6 +27,22 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
 
 void MiniGamePicturePuzzle::Initialize()
 {// called before start
+	isFirstClick = false;
+	flagGameFinished = false;
+	previousCellNumber = 0;
+	currentCellNumber = 0;
+	txtID = 0;
+
+	coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
+	coordsTexture.left = 0.0f; coordsTexture.bottom = 0.0f; coordsTexture.right = 1.0f; coordsTexture.top = 1.0f;
+
+	coordsScreenNew.left = -1.0f; coordsScreenNew.right = 1.0f; coordsScreenNew.top = 1.0f; coordsScreenNew.bottom = -1.0f;
+	coordsTextureNew.left = 0.0f; coordsTextureNew.right = 1.0f; coordsTextureNew.top = 1.0f; coordsTextureNew.bottom = 0.0f;
+
+	coordsLabel.left = -0.9f; coordsLabel.right = 0.9f; coordsLabel.top = 0.25f; coordsLabel.bottom = -0.25f;
+
+	coordsIcon.left = -0.95f; coordsIcon.right = -0.8f; coordsIcon.top = 0.95f; coordsIcon.bottom = 0.75f;
+
 	// Define temporary pointers to a device and a device context
     ComPtr<ID3D11Device> dev11;
     ComPtr<ID3D11DeviceContext> devcon11;
@@ -30,7 +50,6 @@ void MiniGamePicturePuzzle::Initialize()
 	// Create the device and device context objects
 	//D3D_FEATURE_LEVEL levelFeature = D3D_FEATURE_LEVEL_9_1;
     HRESULT h =  D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &dev11, nullptr/*&levelFeature*/, &devcon11);
-	//D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION, &comDevice, nullptr/*&levelFeature*/, &comDeviceContext);
     
     // Convert the pointers from the DirectX 11 versions to the DirectX 11.1 versions
 	dev11.As(&comDevice);
@@ -55,13 +74,10 @@ void MiniGamePicturePuzzle::Initialize()
     tempSwapChain.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;    // how the swap chain should be used
     tempSwapChain.BufferCount = 2;                                  // a front buffer and a back buffer
     tempSwapChain.Format = DXGI_FORMAT_B8G8R8A8_UNORM;              // the most common swap chain format
-	//tempSwapChain.BufferDesc.Format= DXGI_FORMAT_B8G8R8A8_UNORM;
     tempSwapChain.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;    // the recommended flip mode
     tempSwapChain.SampleDesc.Count = 1;
 
-
 	CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
-
     dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
 
 	//An ID3D11Texture2D is an object that stores a flat image. Like any COM object, we first define the pointer, and later a function creates the object for us.
@@ -71,10 +87,6 @@ void MiniGamePicturePuzzle::Initialize()
 
     // create a render target pointing to the back buffer
 	HRESULT hh = comDevice->CreateRenderTargetView(tmpBackBuffer.Get(), nullptr, comBackBuffer.GetAddressOf());
-
-    // set the render target as the back buffer
-    comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
-    //comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), nullptr);
 
 	// set the viewport
     D3D11_VIEWPORT viewport = {0};
@@ -87,7 +99,10 @@ void MiniGamePicturePuzzle::Initialize()
     comDeviceContext->RSSetViewports(1, &viewport);
 
 	//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
-	HRESULT	result = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\beyond.jpg", NULL, &comShaderViews[0], 2048);
+	HRESULT	r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\beyond.jpg", NULL, &comShaderViews[0], 2048);
+	r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\fargus_souls.jpeg", NULL, &comShaderViews[1], 2048);
+	r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\task_complete.png", NULL, &comShaderViews[2], 2048);
+	r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\icon.png", NULL, &comShaderViews[3], 2048);
 
     InitPipeline();
 	InitBuffers();
@@ -96,21 +111,62 @@ void MiniGamePicturePuzzle::Initialize()
 // this is the function that creates the shape to render
 void MiniGamePicturePuzzle::InitBuffers()
 {
-	VERTEX_TEXTURE OurVertices[] =
-    {
-        { XMFLOAT3(-0.5f, -0.5f, 0.0f), XMFLOAT2(0.0f,1.0f) },
-        { XMFLOAT3(-0.5f, 0.5f, 0.0f), XMFLOAT2(0.0f,0.0f) },
-        { XMFLOAT3(0.5f, 0.5f, 0.0f), XMFLOAT2(1.0f,0.0f) },
-		 { XMFLOAT3(0.5f, -0.5f, 0.0f), XMFLOAT2(1.0f,1.0f) }
-    };
+	
+	XMFLOAT3 ScreenCoordsArray[vertexCount/4][4];
+	XMFLOAT2 TextCoordsArray[vertexCount/4][4];
+	unsigned long indices[indexCount];
+	for (int i = 0; i < cRows; i++)
+	{
+		for (int j = 0; j < cColumns; j++)
+		{
+			ScreenCoordsArray[(i*cColumns+j)][0] = XMFLOAT3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*j    ), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*(i+1)), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][1] = XMFLOAT3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*j    ), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][2] = XMFLOAT3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*(j+1)), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*i    ), 0.0f);
+			ScreenCoordsArray[(i*cColumns+j)][3] = XMFLOAT3(coordsScreen.left + (((coordsScreen.right-coordsScreen.left)/cColumns)*(j+1)), coordsScreen.top - (((coordsScreen.top-coordsScreen.bottom)/cRows)*(i+1)), 0.0f);
+			TextCoordsArray[(i*cColumns+j)][0] = XMFLOAT2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+0)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+1)+coordsTexture.top);
+			TextCoordsArray[(i*cColumns+j)][1] = XMFLOAT2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+0)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+0)+coordsTexture.top);
+			TextCoordsArray[(i*cColumns+j)][2] = XMFLOAT2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+1)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+0)+coordsTexture.top);
+			TextCoordsArray[(i*cColumns+j)][3] = XMFLOAT2(((coordsTexture.right-coordsTexture.left)/cColumns)*(j+1)+coordsTexture.left, ((coordsTexture.top-coordsTexture.bottom)/cRows)*(i+1)+coordsTexture.top);
+			indices[(i*cColumns+j)*6  ] = (i*cColumns+j)*4;
+			indices[(i*cColumns+j)*6+1] = (i*cColumns+j)*4+1;
+			indices[(i*cColumns+j)*6+2] = (i*cColumns+j)*4+3;
+			indices[(i*cColumns+j)*6+3] = (i*cColumns+j)*4+3;
+			indices[(i*cColumns+j)*6+4] = (i*cColumns+j)*4+1;
+			indices[(i*cColumns+j)*6+5] = (i*cColumns+j)*4+2;
+		}
+	}
+	//save original texture coordinates
+	for (int i=0; i< vertexCount; i++)
+		StandardTextCoords[i] = TextCoordsArray[i/4][i%4];
+	// shuffle texture coordinates (by group of 4)
+	srand ((unsigned int)time(NULL));
+	XMFLOAT2 t1, t2;
+    for(int i = 0; i < 100; i++){ // 100 is just a big number
+        for(int k=0;k<(vertexCount/4);k++){
+            int r2=rand()%(vertexCount/4); //# of rows
+            for(int m=0;m<4;m++){
+                t1=TextCoordsArray[k][m];
+                t2=TextCoordsArray[r2][m];
+                TextCoordsArray[r2][m]=t1;
+                TextCoordsArray[k][m]=t2;
+            }
+        }
+    }
+	
+	for (int i = 0; i < vertexCount/4; i++)
+		for (int j = 0; j < 4; j++)
+	{
+		RectangleVertices[i*4+j].position = ScreenCoordsArray[i][j];
+		RectangleVertices[i*4+j].texture = TextCoordsArray[i][j];
+	}
 
 	D3D11_BUFFER_DESC vertexBufferDesc = {0};
-    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * ARRAYSIZE(OurVertices);
+    vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * vertexCount;
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-    D3D11_SUBRESOURCE_DATA vertexData = {OurVertices, 0, 0};
+    D3D11_SUBRESOURCE_DATA vertexData = {RectangleVertices, 0, 0};
 
     comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &comVertexBuffer);
 
@@ -121,8 +177,7 @@ void MiniGamePicturePuzzle::InitBuffers()
     indexBufferDesc.MiscFlags = 0;
 	indexBufferDesc.StructureByteStride = 0;
 
-	unsigned long indices[6] = {0, 1, 3, 3, 1, 2}; //rectangle = two triangles
-	indexBufferDesc.ByteWidth = sizeof(unsigned long) * 6;
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * indexCount;
 	D3D11_SUBRESOURCE_DATA indexData;
 	indexData.pSysMem = indices;
 	indexData.SysMemPitch = 0;
@@ -264,7 +319,7 @@ void MiniGamePicturePuzzle::Render() const
 	
 	 // draw 3 vertices, starting from vertex 0
     //comDeviceContext->Draw(3, 0);
-	comDeviceContext->DrawIndexed(6, 0, 0);
+	comDeviceContext->DrawIndexed(indexCount, 0, 0);
 	
 	// switch the back buffer and the front buffer
     comSwapChain->Present(1, 0);

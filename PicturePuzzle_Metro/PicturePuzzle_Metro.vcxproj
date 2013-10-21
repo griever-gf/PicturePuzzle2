@@ -139,6 +139,10 @@
     <Image Include="Assets\SmallLogo.png" />
     <Image Include="Assets\StoreLogo.png" />
     <Image Include="Assets\SplashScreen.png" />
+    <Image Include="res\beyond.jpg" />
+    <Image Include="res\fargus_souls.jpeg" />
+    <Image Include="res\icon.png" />
+    <Image Include="res\task_complete.png" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BasicReaderWriter.h" />

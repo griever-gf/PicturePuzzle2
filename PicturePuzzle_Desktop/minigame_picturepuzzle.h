@@ -34,12 +34,11 @@ static const int				vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be
 static const int				indexCount = MiniGame::cRows*MiniGame::cColumns*6;
 extern VERTEX_TEXTURE			RectangleVertices[vertexCount];
 extern D3DXVECTOR2				StandardTextCoords[vertexCount];
+extern Rect						coordsScreen, coordsTexture;
 extern ID3D11DeviceContext		*comDeviceContext;           // the pointer to our Direct3D device context
 extern ID3D11Buffer				*comVertexBuffer;
-extern Rect						coordsScreen, coordsTexture;
 static const int texturesNum		= 4;
 extern ID3D11ShaderResourceView		*textureShaderViews[texturesNum];
-extern int							currentTextureNum;
 extern	ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
 extern	ID3D11VertexShader			*comVertexShader;    // the vertex shader
 extern	ID3D11PixelShader			*comPixelShader;     // the pixel shader
