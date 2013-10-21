@@ -2,12 +2,14 @@
 #include "minigame_picturepuzzle2.h"
 
 ComPtr<ID3D11DeviceContext1>		comDeviceContext;
+ComPtr<ID3D11RenderTargetView>		comBackBuffer;
 ComPtr<ID3D11Buffer>				comVertexBuffer;
+ComPtr<ID3D11Buffer>				comIndexBuffer;
 ComPtr<ID3D11VertexShader>			comVertexShader;
 ComPtr<ID3D11PixelShader>			comPixelShader;
 ComPtr<ID3D11InputLayout>			comInputLayout; 
 ComPtr<ID3D11SamplerState>			comSamplerState;
-ComPtr<ID3D11ShaderResourceView>	textureShaderViews[3];
+ComPtr<ID3D11ShaderResourceView>	comShaderViews[texturesNum];
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
@@ -64,11 +66,15 @@ void MiniGamePicturePuzzle::Initialize()
 
 	//An ID3D11Texture2D is an object that stores a flat image. Like any COM object, we first define the pointer, and later a function creates the object for us.
 	// get a pointer directly to the back buffer
-    ComPtr<ID3D11Texture2D> backbuffer;
-    comSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backbuffer);
+    ComPtr<ID3D11Texture2D> tmpBackBuffer;
+    comSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &tmpBackBuffer);
 
     // create a render target pointing to the back buffer
-    comDevice->CreateRenderTargetView(backbuffer.Get(), nullptr, &comRendertarget);
+	HRESULT hh = comDevice->CreateRenderTargetView(tmpBackBuffer.Get(), nullptr, comBackBuffer.GetAddressOf());
+
+    // set the render target as the back buffer
+    comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
+    //comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), nullptr);
 
 	// set the viewport
     D3D11_VIEWPORT viewport = {0};
@@ -80,13 +86,11 @@ void MiniGamePicturePuzzle::Initialize()
 
     comDeviceContext->RSSetViewports(1, &viewport);
 
-	//D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Desktop\\res\\beyond.jpg", NULL, NULL, &textureShaderViews[0], NULL);
-	//HRESULT	result = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L"..\\..\\..\\PicturePuzzle_SharedCode\\res\\beyond.jpg", NULL, &textureShaderViews[0], 2048);
-	HRESULT	result = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\beyond.jpg", NULL, &textureShaderViews[0], 2048);
+	//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
+	HRESULT	result = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\beyond.jpg", NULL, &comShaderViews[0], 2048);
 
-	// initialize graphics and the pipeline
-    InitBuffers();
     InitPipeline();
+	InitBuffers();
 }
 
 // this is the function that creates the shape to render
@@ -94,20 +98,14 @@ void MiniGamePicturePuzzle::InitBuffers()
 {
 	VERTEX_TEXTURE OurVertices[] =
     {
-        { XMFLOAT3(0.0f, 0.5f, 0.0f), XMFLOAT2(0.0f,1.0f) },
-        { XMFLOAT3(0.45f, -0.5f, 0.0f), XMFLOAT2(0.0f,0.0f) },
-        { XMFLOAT3(-0.45f, -0.5f, 0.0f), XMFLOAT2(1.0f,0.0f) },
+        { XMFLOAT3(-0.5f, -0.5f, 0.0f), XMFLOAT2(0.0f,1.0f) },
+        { XMFLOAT3(-0.5f, 0.5f, 0.0f), XMFLOAT2(0.0f,0.0f) },
+        { XMFLOAT3(0.5f, 0.5f, 0.0f), XMFLOAT2(1.0f,0.0f) },
+		 { XMFLOAT3(0.5f, -0.5f, 0.0f), XMFLOAT2(1.0f,1.0f) }
     };
-	/*VERTEX OurVertices[] =
-    {
-        { XMFLOAT3(0.0f, 0.5f, 0.0f) },
-        { XMFLOAT3(0.45f, -0.5f, 0.0f) },
-        { XMFLOAT3(-0.45f, -0.5f, 0.0f) },
-    };*/
 
 	D3D11_BUFFER_DESC vertexBufferDesc = {0};
     vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * ARRAYSIZE(OurVertices);
-	 //vertexBufferDesc.ByteWidth = sizeof(VERTEX) * ARRAYSIZE(OurVertices);
     vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufferDesc.CPUAccessFlags = 0;
@@ -115,6 +113,21 @@ void MiniGamePicturePuzzle::InitBuffers()
     D3D11_SUBRESOURCE_DATA vertexData = {OurVertices, 0, 0};
 
     comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &comVertexBuffer);
+
+	D3D11_BUFFER_DESC indexBufferDesc;
+	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    indexBufferDesc.CPUAccessFlags = 0;
+    indexBufferDesc.MiscFlags = 0;
+	indexBufferDesc.StructureByteStride = 0;
+
+	unsigned long indices[6] = {0, 1, 3, 3, 1, 2}; //rectangle = two triangles
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * 6;
+	D3D11_SUBRESOURCE_DATA indexData;
+	indexData.pSysMem = indices;
+	indexData.SysMemPitch = 0;
+	indexData.SysMemSlicePitch = 0;
+	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &comIndexBuffer);
 }
 
 
@@ -190,7 +203,8 @@ void MiniGamePicturePuzzle::InitPipeline()
     samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     samplerDesc.MipLODBias = 0.0f;
     samplerDesc.MaxAnisotropy = 1;
-    samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    //samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     samplerDesc.BorderColor[0] = 0;
 	samplerDesc.BorderColor[1] = 0;
 	samplerDesc.BorderColor[2] = 0;
@@ -214,34 +228,44 @@ bool MiniGamePicturePuzzle::IsComplete() const
 
 void MiniGamePicturePuzzle::Render() const
 {
-	// Set shader texture resource in the pixel shader.
-	comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
+	comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
 
-	// set our new render target object as the active render target
-    comDeviceContext->OMSetRenderTargets(1, comRendertarget.GetAddressOf(), nullptr);
+	// Set shader texture resource in the pixel shader.
+	//comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
+
+	 // Очищаем буфер глубин до едицины (максимальная глубина)
+    //g_pImmediateContext->ClearDepthStencilView( g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
 
 	 // clear the back buffer to a deep blue
     float color[4] = {0.0f, 0.2f, 0.4f, 1.0f};
-    comDeviceContext->ClearRenderTargetView(comRendertarget.Get(), color);
-
-	// set the vertex buffer
+    comDeviceContext->ClearRenderTargetView(comBackBuffer.Get(), color);
+	
+		// set the vertex buffer
     UINT stride = sizeof(VERTEX_TEXTURE);
 	//UINT stride = sizeof(VERTEX);
     UINT offset = 0;
 	comDeviceContext->IASetVertexBuffers(0, 1, comVertexBuffer.GetAddressOf(), &stride, &offset);
 
+	comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0 );
+	comDeviceContext->PSSetShader(comPixelShader.Get(), NULL, 0);
+	comDeviceContext->PSSetShaderResources( 0, 1, comShaderViews[0].GetAddressOf());
+	comDeviceContext->PSSetSamplers( 0, 1, comSamplerState.GetAddressOf() );
+
+	comDeviceContext->IASetIndexBuffer(comIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
 	// set the primitive topology
     comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0);
+	/*comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0);
 	comDeviceContext->PSSetShader(comPixelShader.Get(), NULL, 0);
 
 	// Set the sampler state in the pixel shader.
-	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);
-
+	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);*/
+	
 	 // draw 3 vertices, starting from vertex 0
-    comDeviceContext->Draw(3, 0);
-
+    //comDeviceContext->Draw(3, 0);
+	comDeviceContext->DrawIndexed(6, 0, 0);
+	
 	// switch the back buffer and the front buffer
     comSwapChain->Present(1, 0);
 }

@@ -1,16 +1,16 @@
 #include "pch.h"
 
 #include "minigameinterface.h"
-#include "BasicReaderWriter.h" //shader files reading
-#include "WICTextureLoader.h" //image to texture converting (because D3DX11CreateShaderResourceViewFromFile is deprecated :( )
+#include "WICTextureLoader.h" //image to texture converting (because D3DX11CreateShaderResourceViewFromFile is deprecated for Windows Store:( )
+#include "BasicReaderWriter.h" //compiled shaders (*.cso) loading
 #include <fstream>
-
 
 #pragma once
 
 using namespace Microsoft::WRL;
 using namespace Windows::UI::Core;
 using namespace DirectX;
+
 
 struct VERTEX_TEXTURE
 {
@@ -19,13 +19,16 @@ struct VERTEX_TEXTURE
 };
 
 extern ComPtr<ID3D11DeviceContext1>		comDeviceContext;    // the device context interface
+extern ComPtr<ID3D11RenderTargetView>	comBackBuffer;
 extern ComPtr<ID3D11Buffer>				comVertexBuffer;
+extern ComPtr<ID3D11Buffer>				comIndexBuffer;
 extern ComPtr<ID3D11VertexShader>		comVertexShader;
 extern ComPtr<ID3D11PixelShader>		comPixelShader;
 extern ComPtr<ID3D11InputLayout>		comInputLayout;    // the input layout interface
 extern ComPtr<ID3D11SamplerState>		comSamplerState;
-extern ComPtr<ID3D11ShaderResourceView>	textureShaderViews[3];
-static const int texturesNum		= 4;
+static const int texturesNum			= 4;
+extern ComPtr<ID3D11ShaderResourceView>	comShaderViews[texturesNum];
+
 
 class MiniGamePicturePuzzle : public MiniGame
 {
@@ -43,5 +46,4 @@ private:
 	void InitBuffers(void);
 	ComPtr<ID3D11Device1> comDevice;
 	ComPtr<IDXGISwapChain1> comSwapChain;
-	ComPtr<ID3D11RenderTargetView> comRendertarget;
 };

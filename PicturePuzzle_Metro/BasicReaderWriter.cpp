@@ -7,6 +7,7 @@
 
 #include "pch.h"
 #include "BasicReaderWriter.h"
+#include <wrl\wrappers\corewrappers.h>
 
 using namespace Microsoft::WRL;
 using namespace Windows::Storage;
@@ -15,7 +16,6 @@ using namespace Windows::Storage::Streams;
 using namespace Windows::Foundation;
 using namespace Windows::ApplicationModel;
 using namespace concurrency;
-using namespace Microsoft::WRL;
 
 BasicReaderWriter::BasicReaderWriter()
 {
