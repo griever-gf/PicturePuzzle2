@@ -1,5 +1,8 @@
 #include "minigame_picturepuzzle.h"
 
+#define SCREEN_WIDTH  800
+#define SCREEN_HEIGHT 600
+
 MiniGamePicturePuzzle* PuzzleGame; //global var
 
 // this is the main message handler for the program

@@ -55,6 +55,7 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
 void MiniGamePicturePuzzle::Initialize()
 {// called before start
 	isFirstClick = false;
+	isHardMode = false;
 	flagGameFinished = false;
 	previousCellNumber = 0;
 	currentCellNumber = 0;
@@ -66,7 +67,8 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsTextureNew.left = 0.0f; coordsTextureNew.right = 1.0f; coordsTextureNew.top = 1.0f; coordsTextureNew.bottom = 0.0f;
 
 	coordsLabel.left = -0.9f; coordsLabel.right = 0.9f; coordsLabel.top = 0.25f; coordsLabel.bottom = -0.25f;
-	coordsIcon.left = -0.95f; coordsIcon.right = -0.8f; coordsIcon.top = 0.95f; coordsIcon.bottom = 0.75f;
+	coordsIcon1.left = -0.95f; coordsIcon1.right = -0.8f; coordsIcon1.top = 0.95f; coordsIcon1.bottom = 0.75f;
+	coordsIcon2.left = 0.8f; coordsIcon2.right = 0.95f; coordsIcon2.top = 0.95f; coordsIcon2.bottom = 0.75f;
 
 	#if defined(__cplusplus_winrt)
 		// Define temporary pointers to a device and a device context
@@ -94,16 +96,6 @@ void MiniGamePicturePuzzle::Initialize()
 		//It has two parameters: the type of interface we are obtaining, and a pointer to store the address in.
 		ComPtr<IDXGIFactory2> dxgiFactory;
 		dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
-
-		//определяем разрешение экрана
-		/*IDXGIOutput *pOutput;
-		dxgiAdapter->EnumOutputs(0, &pOutput);
-		DXGI_OUTPUT_DESC desc;
-		pOutput->GetDesc(&desc);
-		screenFull.left = desc.DesktopCoordinates.left;
-		screenFull.right = desc.DesktopCoordinates.right;
-		screenFull.top = desc.DesktopCoordinates.top;
-		screenFull.bottom = desc.DesktopCoordinates.bottom;*/
 
 		// set up the swap chain description
 		DXGI_SWAP_CHAIN_DESC1 tempSwapChain = {0};
@@ -154,8 +146,10 @@ void MiniGamePicturePuzzle::Initialize()
 		viewport.Width = Window->Bounds.Width;
 		viewport.Height = Window->Bounds.Height;
 	#else
-		viewport.Width = SCREEN_WIDTH;
-		viewport.Height = SCREEN_HEIGHT;
+		RECT rect;
+		GetClientRect(hWnd, &rect);
+		viewport.Width = (rect.right - rect.left);
+		viewport.Height = (rect.bottom - rect.top);
 	#endif
     comDeviceContext->RSSetViewports(1, &viewport);
 
@@ -165,15 +159,13 @@ void MiniGamePicturePuzzle::Initialize()
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\fargus_souls.jpeg", NULL, &comShaderViews[1], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\task_complete.png", NULL, &comShaderViews[2], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\icon.png", NULL, &comShaderViews[3], 2048);
+		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\switch_mode_icon.png", NULL, &comShaderViews[4], 2048);
 	#else
-		//r1 = CreateWICTextureFromFile(comDevice, comDeviceContext, L".\\res\\beyond.jpg", NULL, &comShaderViews[0], 2048);
-		//r1 = CreateWICTextureFromFile(comDevice, comDeviceContext, L".\\res\\fargus_souls.jpeg", NULL, &comShaderViews[1], 2048);
-		//r1 = CreateWICTextureFromFile(comDevice, comDeviceContext, L".\\res\\task_complete.png", NULL, &comShaderViews[2], 2048);
-		//r1 = CreateWICTextureFromFile(comDevice, comDeviceContext, L".\\res\\icon.png", NULL, &comShaderViews[3], 2048);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\beyond.jpg", NULL, NULL, &comShaderViews[0], NULL);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\fargus_souls.jpeg", NULL, NULL, &comShaderViews[1], NULL);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\task_complete.png", NULL, NULL, &comShaderViews[2], NULL);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\icon.png", NULL, NULL, &comShaderViews[3], NULL);
+		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\switch_mode_icon.png", NULL, NULL, &comShaderViews[4], NULL);
 	#endif
     InitPipeline();
 	InitBuffers();
@@ -267,12 +259,19 @@ void MiniGamePicturePuzzle::InitBuffers()
 	indexData.pSysMem = label_indices;
 	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &fontIndexBuffer);
 
-	VERTEX_TEXTURE IconVertices[4] = { {VECTOR_F3(coordsIcon.left,coordsIcon.bottom,0.0f),VECTOR_F2(0.0f,1.0f)},
-										{VECTOR_F3(coordsIcon.left,coordsIcon.top,0.0f),VECTOR_F2(0.0f,0.0f)},
-										{VECTOR_F3(coordsIcon.right,coordsIcon.top,0.0f),VECTOR_F2(1.0f,0.0f)},
-										{VECTOR_F3(coordsIcon.right,coordsIcon.bottom,0.0f),VECTOR_F2(1.0f,1.0f)}};
-	vertexData.pSysMem = IconVertices;
-	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &iconVertexBuffer);
+	VERTEX_TEXTURE IconLoadPicVertices[4] = { {VECTOR_F3(coordsIcon1.left,coordsIcon1.bottom,0.0f),VECTOR_F2(0.0f,1.0f)},
+										{VECTOR_F3(coordsIcon1.left,coordsIcon1.top,0.0f),VECTOR_F2(0.0f,0.0f)},
+										{VECTOR_F3(coordsIcon1.right,coordsIcon1.top,0.0f),VECTOR_F2(1.0f,0.0f)},
+										{VECTOR_F3(coordsIcon1.right,coordsIcon1.bottom,0.0f),VECTOR_F2(1.0f,1.0f)}};
+	vertexData.pSysMem = IconLoadPicVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &iconLoadPicVertexBuffer);
+
+	VERTEX_TEXTURE IconModeSwitchVertices[4] = { {VECTOR_F3(coordsIcon2.left,coordsIcon2.bottom,0.0f),VECTOR_F2(0.0f,1.0f)},
+										{VECTOR_F3(coordsIcon2.left,coordsIcon2.top,0.0f),VECTOR_F2(0.0f,0.0f)},
+										{VECTOR_F3(coordsIcon2.right,coordsIcon2.top,0.0f),VECTOR_F2(1.0f,0.0f)},
+										{VECTOR_F3(coordsIcon2.right,coordsIcon2.bottom,0.0f),VECTOR_F2(1.0f,1.0f)}};
+	vertexData.pSysMem = IconModeSwitchVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &iconModeSwitchVertexBuffer);
 }
 
 
@@ -342,9 +341,7 @@ void MiniGamePicturePuzzle::InitPipeline()
 
 void MiniGamePicturePuzzle::Click(float x1, float y1)
 {
-	isFirstClick = !isFirstClick;	
-	float width = SCREEN_WIDTH;
-	float height = SCREEN_HEIGHT;
+	isFirstClick = !isFirstClick;
 	#if defined(__cplusplus_winrt)
 		CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
 		Rect rect;
@@ -357,20 +354,15 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 		GetClientRect(hWnd, &rect);
 	#endif
 
-	width = (rect.right - rect.left)*((coordsScreen.right - coordsScreen.left)/2.0f);
-	height = (rect.bottom - rect.top)*((coordsScreen.top - coordsScreen.bottom)/2.0f);
+	float width = (rect.right - rect.left)*((coordsScreen.right - coordsScreen.left)/2.0f);
+	float height = (rect.bottom - rect.top)*((coordsScreen.top - coordsScreen.bottom)/2.0f);
 
 	float oneColumnSize = width/cColumns;
 	float oneRowSize = height/cRows;
 	float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
 	float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
 
-	float centerx = width*((coordsIcon.right+coordsIcon.left+2)/4);
-	float centery = height*(1 - (coordsIcon.top+coordsIcon.bottom+2)/4);
-	float radiusx = width*((coordsIcon.right - coordsIcon.left)/4);
-	float radiusy = height*((coordsIcon.top - coordsIcon.bottom)/4);
-	//if point inside the circle icon...
-	if (((x1 - centerx)*(x1 - centerx) + (y1 - centery)*(y1 - centery)) < radiusx*radiusy)
+	if (isPointInsideCircle(coordsIcon1, x1, y1, rect.right - rect.left, rect.bottom - rect.top))
 	{
 		std::wstringstream WStrStream;
 		WStrStream << "Inside a circle!";
@@ -384,53 +376,69 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 		#endif
 		return;
 	}
-	else	//если кликнули не в прямоугольник - выходим
-		if (!((firstColumnCoordX<=x1)&&(firstColumnCoordX+width>=x1)&&(firstRowCoordY<=y1)&&(firstRowCoordY+height>=y1)))
-			return;
-		else
-			if (!flagGameFinished)
+	if (isPointInsideCircle(coordsIcon2, x1, y1, rect.right - rect.left, rect.bottom - rect.top))
+	{
+		//isHardMode = !isHardMode;
+		return;
+	}
+	//если кликнули не в прямоугольник - выходим
+	if (!((firstColumnCoordX<=x1)&&(firstColumnCoordX+width>=x1)&&(firstRowCoordY<=y1)&&(firstRowCoordY+height>=y1)))
+		return;
+	else
+		if (!flagGameFinished)
+		{
+			int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
+			int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
+
+			currentCellNumber = x + y*cColumns;
+
+			if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
 			{
-				int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
-				int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
+				D3D11_MAPPED_SUBRESOURCE mappedSubRes;
+				ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+				#if defined(__cplusplus_winrt)
+					comDeviceContext->Map(comVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
+				#else
+					comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
+				#endif
 
-				currentCellNumber = x + y*cColumns;
+				//swap texture_coords[4] gropes
+				VECTOR_F2 buf[4];
+				buf[0]= RectangleVertices[previousCellNumber*4+0].texture;
+				buf[1]= RectangleVertices[previousCellNumber*4+1].texture;
+				buf[2]= RectangleVertices[previousCellNumber*4+2].texture;
+				buf[3]= RectangleVertices[previousCellNumber*4+3].texture;
+				RectangleVertices[previousCellNumber*4+0].texture = RectangleVertices[currentCellNumber*4+0].texture;
+				RectangleVertices[previousCellNumber*4+1].texture = RectangleVertices[currentCellNumber*4+1].texture;
+				RectangleVertices[previousCellNumber*4+2].texture = RectangleVertices[currentCellNumber*4+2].texture;
+				RectangleVertices[previousCellNumber*4+3].texture = RectangleVertices[currentCellNumber*4+3].texture;
+				RectangleVertices[currentCellNumber*4+0].texture = buf[0];
+				RectangleVertices[currentCellNumber*4+1].texture = buf[1];
+				RectangleVertices[currentCellNumber*4+2].texture = buf[2];
+				RectangleVertices[currentCellNumber*4+3].texture = buf[3];
+				//понятное дело, что лучше обновить часть вертексного буфера, чем буфер целиком, но у меня не получилось :(
+				//пытался копать CopySubresourceRegion, но...
+				memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));
 
-				if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
-				{
-					D3D11_MAPPED_SUBRESOURCE mappedSubRes;
-					ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
-					#if defined(__cplusplus_winrt)
-						comDeviceContext->Map(comVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
-					#else
-						comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
-					#endif
-
-					//swap texture_coords[4] gropes
-					VECTOR_F2 buf[4];
-					buf[0]= RectangleVertices[previousCellNumber*4+0].texture;
-					buf[1]= RectangleVertices[previousCellNumber*4+1].texture;
-					buf[2]= RectangleVertices[previousCellNumber*4+2].texture;
-					buf[3]= RectangleVertices[previousCellNumber*4+3].texture;
-					RectangleVertices[previousCellNumber*4+0].texture = RectangleVertices[currentCellNumber*4+0].texture;
-					RectangleVertices[previousCellNumber*4+1].texture = RectangleVertices[currentCellNumber*4+1].texture;
-					RectangleVertices[previousCellNumber*4+2].texture = RectangleVertices[currentCellNumber*4+2].texture;
-					RectangleVertices[previousCellNumber*4+3].texture = RectangleVertices[currentCellNumber*4+3].texture;
-					RectangleVertices[currentCellNumber*4+0].texture = buf[0];
-					RectangleVertices[currentCellNumber*4+1].texture = buf[1];
-					RectangleVertices[currentCellNumber*4+2].texture = buf[2];
-					RectangleVertices[currentCellNumber*4+3].texture = buf[3];
-					//понятное дело, что лучше обновить часть вертексного буфера, чем буфер целиком, но у меня не получилось :(
-					//пытался копать CopySubresourceRegion, но...
-					memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));
-
-					#if defined(__cplusplus_winrt)
-						comDeviceContext->Unmap(comVertexBuffer.Get(), NULL);
-					#else
-						comDeviceContext->Unmap(comVertexBuffer, NULL);
-					#endif
-				}
-				previousCellNumber = currentCellNumber;
+				#if defined(__cplusplus_winrt)
+					comDeviceContext->Unmap(comVertexBuffer.Get(), NULL);
+				#else
+					comDeviceContext->Unmap(comVertexBuffer, NULL);
+				#endif
 			}
+			previousCellNumber = currentCellNumber;
+		}
+}
+
+bool MiniGamePicturePuzzle::isPointInsideCircle(Rect coordsCircle, float x, float y, float screenWidth, float screenHeight)
+{
+	float centerx = screenWidth*((coordsCircle.right+coordsCircle.left+2)/4);
+	float centery = screenHeight*(1 - (coordsCircle.top+coordsCircle.bottom+2)/4);
+	float radiusx = screenWidth*((coordsCircle.right - coordsCircle.left)/4);
+	float radiusy = screenHeight*((coordsCircle.top - coordsCircle.bottom)/4);
+	//if point inside the circle icon...
+	bool res = (((x - centerx)*(x - centerx) + (y - centery)*(y - centery)) < radiusx*radiusy);
+	return res;
 }
 
 bool MiniGamePicturePuzzle::IsComplete() const
@@ -447,33 +455,47 @@ bool MiniGamePicturePuzzle::IsComplete() const
 
 void MiniGamePicturePuzzle::Render() const
 {
-	//uncomment to see some FUNNY effect :)
-	/*
-	coordsScreenNew.left = fmod(coordsScreenNew.left+0.0001+1, 1) - 1;
-	coordsScreenNew.right = fmod(coordsScreenNew.right+0.0001+1, 1);
-	coordsScreenNew.top = fmod(coordsScreenNew.top+0.0001+1, 1);
-	coordsScreenNew.bottom = fmod(coordsScreenNew.bottom+0.0001+1, 1) - 1;
-	coordsTextureNew.left = fmod(coordsTextureNew.left+0.0001, 0.5);
-	coordsTextureNew.right = fmod(coordsTextureNew.right+0.0001, 0.5) + 0.5;
-	coordsTextureNew.bottom = fmod(coordsTextureNew.bottom+0.0001, 0.5);
-	coordsTextureNew.top = fmod(coordsTextureNew.top+0.0001, 0.5) + 0.5;
-	txtID = (txtID+1) % 600;
-	*/
-	//comment lower string to see some FUNNY effect :)
-	txtID = 0;
-	::Render(coordsScreenNew, txtID / 300, coordsTextureNew);
+	if (isHardMode){
+		coordsScreenNew.left = fmod(coordsScreenNew.left+0.001f+1, 1.0f) - 1;
+		coordsScreenNew.right = fmod(coordsScreenNew.right+0.001f+1, 1.0f);
+		coordsScreenNew.top = fmod(coordsScreenNew.top+0.001f+1, 1.0f);
+		coordsScreenNew.bottom = fmod(coordsScreenNew.bottom+0.001f+1, 1.0f) - 1;
+		coordsTextureNew.left = fmod(coordsTextureNew.left+0.001f, 0.5f);
+		coordsTextureNew.right = fmod(coordsTextureNew.right+0.001f, 0.5f) + 0.5f;
+		coordsTextureNew.bottom = fmod(coordsTextureNew.bottom+0.001f, 0.5f);
+		coordsTextureNew.top = fmod(coordsTextureNew.top+0.001f, 0.5f) + 0.5f;
+		txtID = (txtID+1) % 20;
+	} else {
+		//coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
+		//coordsTexture.left = 0.0f; coordsTexture.bottom = 0.0f; coordsTexture.right = 1.0f; coordsTexture.top = 1.0f;
+		coordsScreenNew.left = -1.0f; coordsScreenNew.right = 1.0f; coordsScreenNew.top = 1.0f; coordsScreenNew.bottom = -1.0f;
+		coordsTextureNew.left = 0.0f; coordsTextureNew.right = 1.0f; coordsTextureNew.top = 1.0f; coordsTextureNew.bottom = 0.0f;
+		txtID = 0;
+	}
+
+	//call of global function with the same name
+	::Render(coordsScreenNew, txtID / 10, coordsTextureNew);
 
 	//open file icon rendering
 	UINT stride = sizeof(VERTEX_TEXTURE);
 	UINT offset = 0;
 	#if defined(__cplusplus_winrt)
 		comDeviceContext->PSSetShaderResources(0, 1, comShaderViews[3].GetAddressOf());
-		comDeviceContext->IASetVertexBuffers(0, 1, iconVertexBuffer.GetAddressOf(), &stride, &offset);
+		comDeviceContext->IASetVertexBuffers(0, 1, iconLoadPicVertexBuffer.GetAddressOf(), &stride, &offset);
 		comDeviceContext->IASetIndexBuffer(fontIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0); //because the same for font & icon
 	#else
 		comDeviceContext->PSSetShaderResources(0, 1, &comShaderViews[3]);
-		comDeviceContext->IASetVertexBuffers(0, 1, &iconVertexBuffer, &stride, &offset);
+		comDeviceContext->IASetVertexBuffers(0, 1, &iconLoadPicVertexBuffer, &stride, &offset);
 		comDeviceContext->IASetIndexBuffer(fontIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	#endif
+	comDeviceContext->DrawIndexed(6, 0, 0);
+	//mode switch icon rendering
+	#if defined(__cplusplus_winrt)
+		comDeviceContext->PSSetShaderResources(0, 1, comShaderViews[4].GetAddressOf());
+		comDeviceContext->IASetVertexBuffers(0, 1, iconModeSwitchVertexBuffer.GetAddressOf(), &stride, &offset);
+	#else
+		comDeviceContext->PSSetShaderResources(0, 1, &comShaderViews[4]);
+		comDeviceContext->IASetVertexBuffers(0, 1, &iconModeSwitchVertexBuffer, &stride, &offset);
 	#endif
 	comDeviceContext->DrawIndexed(6, 0, 0);
 
@@ -562,5 +584,3 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
     // draw the vertex buffer to the back buffer
 	comDeviceContext->DrawIndexed(indexCount, 0, 0);
 }
-
-

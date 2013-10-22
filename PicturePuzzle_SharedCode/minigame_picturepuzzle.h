@@ -1,10 +1,7 @@
 #if defined(__cplusplus_winrt)
-	//#include "pch.h"
 	#include <wrl/client.h>
 	#include <d3d11_1.h>
 	#include <DirectXMath.h>
-	//#include <memory>
-	//#include <agile.h>
 	#include "BasicReaderWriter.h" //compiled shaders (*.cso) loading
 	#include "WICTextureLoader.h" //image to texture converting (because D3DX11CreateShaderResourceViewFromFile is deprecated for Windows Store:( )
 	#pragma once
@@ -41,9 +38,6 @@ struct VERTEX_TEXTURE
 	VECTOR_F2 texture;
 };
 
-#define SCREEN_WIDTH  800
-#define SCREEN_HEIGHT 600
-
 //эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle,
 //а ей нужно передавать параметры, а они ограничены шаблоном из текста тестового задания...
 static const int				vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be  (cRows+1)*(cColumns+1);
@@ -51,7 +45,7 @@ static const int				indexCount = MiniGame::cRows*MiniGame::cColumns*6;
 extern VERTEX_TEXTURE			RectangleVertices[vertexCount];
 extern VECTOR_F2				StandardTextCoords[vertexCount];
 extern Rect						coordsScreen, coordsTexture;
-static const int texturesNum	= 4;
+static const int texturesNum	= 5;
 
 #if defined(__cplusplus_winrt)
 	extern ComPtr<ID3D11DeviceContext1>		comDeviceContext;    // the device context interface
@@ -93,11 +87,12 @@ public:
 private:
 	void InitPipeline(void);
 	void InitBuffers(void);
+	bool isPointInsideCircle(Rect coordsCircle, float x, float y, float screenWidth, float screenHeight);
 
-	Rect	coordsLabel, coordsIcon;
+	Rect	coordsLabel, coordsIcon1, coordsIcon2;
 	
 	mutable int txtID;
-	bool isFirstClick;
+	bool isFirstClick, isHardMode;
 	mutable bool flagGameFinished;
 	int previousCellNumber, currentCellNumber;
 
@@ -107,13 +102,15 @@ private:
 		ComPtr<ID3D11Buffer>		fontVertexBuffer; 
 		ComPtr<ID3D11Buffer>		fontIndexBuffer; 
 		ComPtr<ID3D11SamplerState>	fontAtlasSampler;
-		ComPtr<ID3D11Buffer>		iconVertexBuffer;
+		ComPtr<ID3D11Buffer>		iconLoadPicVertexBuffer;
+		ComPtr<ID3D11Buffer>		iconModeSwitchVertexBuffer;
 	#else
 		ID3D11Device				*comDevice;                     // the pointer to our Direct3D device interface
 		IDXGISwapChain				*comSwapChain;             // the pointer to the swap chain interface
 		ID3D11Buffer				*fontVertexBuffer; 
 		ID3D11Buffer				*fontIndexBuffer; 
 		ID3D11SamplerState			*fontAtlasSampler;
-		ID3D11Buffer				*iconVertexBuffer;
+		ID3D11Buffer				*iconLoadPicVertexBuffer;
+		ID3D11Buffer				*iconModeSwitchVertexBuffer;
 	#endif
 };
