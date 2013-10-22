@@ -69,6 +69,16 @@ void MiniGamePicturePuzzle::Initialize()
     ComPtr<IDXGIFactory2> dxgiFactory;
     dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
 
+	//определяем разрешение экрана
+	IDXGIOutput *pOutput;
+	dxgiAdapter->EnumOutputs(0, &pOutput);
+	DXGI_OUTPUT_DESC desc;
+	pOutput->GetDesc(&desc);
+	screenFull.left = desc.DesktopCoordinates.left;
+	screenFull.right = desc.DesktopCoordinates.right;
+	screenFull.top = desc.DesktopCoordinates.top;
+	screenFull.bottom = desc.DesktopCoordinates.bottom;
+
 	// set up the swap chain description
     DXGI_SWAP_CHAIN_DESC1 tempSwapChain = {0};
     tempSwapChain.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;    // how the swap chain should be used
@@ -78,8 +88,9 @@ void MiniGamePicturePuzzle::Initialize()
     tempSwapChain.SampleDesc.Count = 1;
 
 	CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
-    dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
 
+    dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
+	
 	//An ID3D11Texture2D is an object that stores a flat image. Like any COM object, we first define the pointer, and later a function creates the object for us.
 	// get a pointer directly to the back buffer
     ComPtr<ID3D11Texture2D> tmpBackBuffer;
@@ -183,6 +194,29 @@ void MiniGamePicturePuzzle::InitBuffers()
 	indexData.SysMemPitch = 0;
 	indexData.SysMemSlicePitch = 0;
 	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &comIndexBuffer);
+
+	VERTEX_TEXTURE LabelVertices[4] = { {XMFLOAT3(coordsLabel.left,coordsLabel.bottom,0.0f),XMFLOAT2(0.0f,1.0f)},
+										{XMFLOAT3(coordsLabel.left,coordsLabel.top,0.0f),XMFLOAT2(0.0f,0.0f)},
+										{XMFLOAT3(coordsLabel.right,coordsLabel.top,0.0f),XMFLOAT2(1.0f,0.0f)},
+										{XMFLOAT3(coordsLabel.right,coordsLabel.bottom,0.0f),XMFLOAT2(1.0f,1.0f)}};
+	vertexBufferDesc.ByteWidth = sizeof(VERTEX_TEXTURE) * 4;
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexData.pSysMem = LabelVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &fontVertexBuffer); 
+
+	unsigned long label_indices[6] = {0, 1, 3, 3, 1, 2}; //rectangle = two triangles
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * 6;
+	indexData.pSysMem = label_indices;
+	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &fontIndexBuffer);
+
+	VERTEX_TEXTURE IconVertices[4] = { {XMFLOAT3(coordsIcon.left,coordsIcon.bottom,0.0f),XMFLOAT2(0.0f,1.0f)},
+										{XMFLOAT3(coordsIcon.left,coordsIcon.top,0.0f),XMFLOAT2(0.0f,0.0f)},
+										{XMFLOAT3(coordsIcon.right,coordsIcon.top,0.0f),XMFLOAT2(1.0f,0.0f)},
+										{XMFLOAT3(coordsIcon.right,coordsIcon.bottom,0.0f),XMFLOAT2(1.0f,1.0f)}};
+	vertexData.pSysMem = IconVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &iconVertexBuffer);
 }
 
 
@@ -192,50 +226,10 @@ void MiniGamePicturePuzzle::InitPipeline()
 	// Create a Basic Reader-Writer class to load data from disk.  This class is examined
     // in the Resource Loading sample.
     BasicReaderWriter^ reader = ref new BasicReaderWriter();
-
-    // load the shader files
-	//ID3D10Blob *VS, *PS;
-
-	// You can use this API to develop your Windows Store apps, but you can't use it in apps that you submit to the Windows Store.
-	//HRESULT h1 = D3DCompileFromFile(L".\\res\\shaders_2d.hlsl", NULL, NULL, NULL, "vs_5_0", 0, 0, &VS, nullptr);
-    //HRESULT h2 = D3DCompileFromFile(L".\\res\\shaders_2d.hlsl", NULL, NULL, NULL, "ps_5_0", 0, 0, &PS, nullptr);
-	// load the shader files
-    //Array<byte>^ VSFile = LoadShaderFile("VertexShader.cso");
-    //Array<byte>^ PSFile = LoadShaderFile("PixelShader.cso");
-	//D3DReadFileToBlob(L"VertexShadercso", &VS);
-	//D3DReadFileToBlob(L"PixelShader.cso", &PS);
 	auto vertexShaderBytecode = reader->ReadData("VertexShader.cso");
 	HRESULT H1 = comDevice->CreateVertexShader(vertexShaderBytecode->Data, vertexShaderBytecode->Length, nullptr, &comVertexShader);
 	auto pixelShaderBytecode = reader->ReadData("PixelShader.cso");
 	H1= comDevice->CreatePixelShader(pixelShaderBytecode->Data, pixelShaderBytecode->Length, nullptr, &comPixelShader);
-
-	/*std::ifstream vs_stream;
-	size_t vs_size;
-	char* vs_data;
-
-	vs_stream.open("VertexShader.cso", std::ifstream::in | std::ifstream::binary);
-	if(vs_stream.good())
-	{
-		vs_stream.seekg(0, std::ios::end);
-		vs_size = size_t(vs_stream.tellg());
-		vs_data = new char[vs_size];
-		vs_stream.seekg(0, std::ios::beg);
-		vs_stream.read(&vs_data[0], vs_size);
-		vs_stream.close();
-
-		HRESULT H1 = comDevice->CreateVertexShader(&vs_data, vs_size, 0, &comVertexShader);
-		HRESULT H2 = H1+1;
-	}*/
-
-	//vertexShaderBytecode = reader->ReadData("PixelShader.cso");
-	//comDevice->CreateVertexShader(vertexShaderBytecode->Data, vertexShaderBytecode->Length, nullptr, &comPixelShader);
-
-	// create the shader objects
-    //comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), nullptr, &comVertexShader);
-    //comDevice->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), nullptr, &comPixelShader);
-	// create the shader objects
-    //comDevice->CreateVertexShader(VSFile->Data, VSFile->Length, nullptr, &comVertexShader);
-    //comDevice->CreatePixelShader(PSFile->Data, PSFile->Length, nullptr, &comPixelShader);
 
 	// set the shader objects as the active shaders
     comDeviceContext->VSSetShader(comVertexShader.Get(), nullptr, 0);
@@ -269,57 +263,133 @@ void MiniGamePicturePuzzle::InitPipeline()
 
 	// Create the texture sampler state.
     HRESULT result = comDevice->CreateSamplerState(&samplerDesc, &comSamplerState);
+
+	//samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	//comDevice->CreateSamplerState(&samplerDesc,&fontAtlasSampler);
 }
 
 void MiniGamePicturePuzzle::Click(float x1, float y1)
 {
-	
+	isFirstClick = !isFirstClick;
+			
+	Rect rect = screenFull;
+	float width = SCREEN_WIDTH;
+	float height = SCREEN_HEIGHT;
+	//if(GetClientRect(hWnd, &rect)) for DESKTOP
+	{
+		width = (rect.right - rect.left)*((coordsScreen.right - coordsScreen.left)/2.0f);
+		height = (rect.bottom - rect.top)*((coordsScreen.top - coordsScreen.bottom)/2.0f);
+	}
+
+	float oneColumnSize = width/cColumns;
+	float oneRowSize = height/cRows;
+	float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
+	float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
+
+	float centerx = width*((coordsIcon.right+coordsIcon.left+2)/4);
+	float centery = height*(1 - (coordsIcon.top+coordsIcon.bottom+2)/4);
+	float radiusx = width*((coordsIcon.right - coordsIcon.left)/2);
+	float radiusy = height*((coordsIcon.top - coordsIcon.bottom)/2);
+	//if point inside the circle icon...
+	if (((x1 - centerx)*(x1 - centerx) + (y1 - centery)*(y1 - centery)) < radiusx*radiusy)
+	{
+		std::wstringstream WStrStream;
+		WStrStream << "inside a circle!";
+		//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+		Platform::String^ plStr = ref new Platform::String(WStrStream.str().c_str());
+		Windows::UI::Popups::MessageDialog Dialog(plStr, "Notice!");
+        Dialog.ShowAsync();
+		return;
+	}
+	else	//если кликнули не в прямоугольник - выходим
+		if (!((firstColumnCoordX<=x1)&&(firstColumnCoordX+width>=x1)&&(firstRowCoordY<=y1)&&(firstRowCoordY+height>=y1)))
+			return;
+		else
+			if (!flagGameFinished)
+			{
+				int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
+				int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
+
+				currentCellNumber = x + y*cColumns;
+
+				//std::wstringstream WStrStream;
+				//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
+				//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+				if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
+				{
+					D3D11_MAPPED_SUBRESOURCE mappedSubRes;
+					ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+					comDeviceContext->Map(comVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);  
+
+					//swap texture_coords[4] gropes
+					XMFLOAT2 buf[4];
+					buf[0]= RectangleVertices[previousCellNumber*4+0].texture;
+					buf[1]= RectangleVertices[previousCellNumber*4+1].texture;
+					buf[2]= RectangleVertices[previousCellNumber*4+2].texture;
+					buf[3]= RectangleVertices[previousCellNumber*4+3].texture;
+					RectangleVertices[previousCellNumber*4+0].texture = RectangleVertices[currentCellNumber*4+0].texture;
+					RectangleVertices[previousCellNumber*4+1].texture = RectangleVertices[currentCellNumber*4+1].texture;
+					RectangleVertices[previousCellNumber*4+2].texture = RectangleVertices[currentCellNumber*4+2].texture;
+					RectangleVertices[previousCellNumber*4+3].texture = RectangleVertices[currentCellNumber*4+3].texture;
+					RectangleVertices[currentCellNumber*4+0].texture = buf[0];
+					RectangleVertices[currentCellNumber*4+1].texture = buf[1];
+					RectangleVertices[currentCellNumber*4+2].texture = buf[2];
+					RectangleVertices[currentCellNumber*4+3].texture = buf[3];
+				
+					//понятное дело, что лучше обновить часть вертексного буфера, чем буфер целиком, но у меня не получилось :(
+					//пытался копать CopySubresourceRegion, но...
+					memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));  
+					comDeviceContext->Unmap(comVertexBuffer.Get(), NULL);
+				}
+				previousCellNumber = currentCellNumber;
+			}
 }
 
 bool MiniGamePicturePuzzle::IsComplete() const
 {
-	return true;
+	bool res = false;
+	for (int i=0; i< vertexCount; i++)
+	{
+		if ((StandardTextCoords[i].x != RectangleVertices[i].texture.x)||(StandardTextCoords[i].y != RectangleVertices[i].texture.y))
+			return res;
+	}
+	res = true;
+	return res;
 }
 
 void MiniGamePicturePuzzle::Render() const
 {
-	comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
+	//uncomment to see some FUNNY effect :)
+	/*
+	coordsScreenNew.left = fmod(coordsScreenNew.left+0.0001+1, 1) - 1;
+	coordsScreenNew.right = fmod(coordsScreenNew.right+0.0001+1, 1);
+	coordsScreenNew.top = fmod(coordsScreenNew.top+0.0001+1, 1);
+	coordsScreenNew.bottom = fmod(coordsScreenNew.bottom+0.0001+1, 1) - 1;
+	coordsTextureNew.left = fmod(coordsTextureNew.left+0.0001, 0.5);
+	coordsTextureNew.right = fmod(coordsTextureNew.right+0.0001, 0.5) + 0.5;
+	coordsTextureNew.bottom = fmod(coordsTextureNew.bottom+0.0001, 0.5);
+	coordsTextureNew.top = fmod(coordsTextureNew.top+0.0001, 0.5) + 0.5;
+	txtID = (txtID+1) % 600;
+	*/
+	//comment lower string to see some FUNNY effect :)
+	txtID = 0;
+	::Render(coordsScreenNew, txtID / 300, coordsTextureNew);
 
-	// Set shader texture resource in the pixel shader.
-	//comDeviceContext->PSSetShaderResources(0, 1, &textureShaderViews[0]); //APPLYING TEXTURE
+	//open file icon render
+	comDeviceContext->PSSetShaderResources(0, 1, comShaderViews[3].GetAddressOf());
+	UINT stride = sizeof(VERTEX_TEXTURE);
+	UINT offset = 0;
+	comDeviceContext->IASetVertexBuffers(0, 1, iconVertexBuffer.GetAddressOf(), &stride, &offset);
+	comDeviceContext->IASetIndexBuffer(fontIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0); //because the same for font & icon
+	comDeviceContext->DrawIndexed(6, 0, 0);
 
-	 // Очищаем буфер глубин до едицины (максимальная глубина)
-    //g_pImmediateContext->ClearDepthStencilView( g_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0 );
-
-	 // clear the back buffer to a deep blue
-    float color[4] = {0.0f, 0.2f, 0.4f, 1.0f};
-    comDeviceContext->ClearRenderTargetView(comBackBuffer.Get(), color);
-	
-		// set the vertex buffer
-    UINT stride = sizeof(VERTEX_TEXTURE);
-	//UINT stride = sizeof(VERTEX);
-    UINT offset = 0;
-	comDeviceContext->IASetVertexBuffers(0, 1, comVertexBuffer.GetAddressOf(), &stride, &offset);
-
-	comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0 );
-	comDeviceContext->PSSetShader(comPixelShader.Get(), NULL, 0);
-	comDeviceContext->PSSetShaderResources( 0, 1, comShaderViews[0].GetAddressOf());
-	comDeviceContext->PSSetSamplers( 0, 1, comSamplerState.GetAddressOf() );
-
-	comDeviceContext->IASetIndexBuffer(comIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-	// set the primitive topology
-    comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	/*comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0);
-	comDeviceContext->PSSetShader(comPixelShader.Get(), NULL, 0);
-
-	// Set the sampler state in the pixel shader.
-	comDeviceContext->PSSetSamplers(0, 1, &comSamplerState);*/
-	
-	 // draw 3 vertices, starting from vertex 0
-    //comDeviceContext->Draw(3, 0);
-	comDeviceContext->DrawIndexed(indexCount, 0, 0);
+	if (IsComplete()) //render "complete" label
+	{
+		flagGameFinished = true;
+		comDeviceContext->PSSetShaderResources(0, 1, comShaderViews[2].GetAddressOf());
+		comDeviceContext->IASetVertexBuffers(0, 1, fontVertexBuffer.GetAddressOf(), &stride, &offset);
+		comDeviceContext->DrawIndexed(6, 0, 0);
+	}
 	
 	// switch the back buffer and the front buffer
     comSwapChain->Present(1, 0);
@@ -327,7 +397,57 @@ void MiniGamePicturePuzzle::Render() const
 
 void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 {
-	
+	// наверное, тут надо применять матрицы преобразований, но я так устал... :)
+	float levelCompressionCoordX = (screenCoords.right - screenCoords.left)/(coordsScreen.right - coordsScreen.left);
+	float levelCompressionCoordY = (screenCoords.top - screenCoords.bottom)/(coordsScreen.top - coordsScreen.bottom);
+	float levelShiftCoordX = screenCoords.left - coordsScreen.left;
+	float levelShiftCoordY = screenCoords.bottom - coordsScreen.bottom;
+	float levelCompressionTextureX = (textureCoords.right - textureCoords.left)/(coordsTexture.right - coordsTexture.left);
+	float levelCompressionTextureY = (textureCoords.bottom - textureCoords.top)/(coordsTexture.bottom - coordsTexture.top);
+	float levelShiftTextureX = textureCoords.left - coordsTexture.left;
+	float levelShiftTextureY = textureCoords.top - coordsTexture.top;
+
+	for (int k = 0; k < vertexCount; k++)
+	{
+		RectangleVertices[k].position.x = (RectangleVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
+		RectangleVertices[k].position.y = (RectangleVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
+		RectangleVertices[k].texture.x = RectangleVertices[k].texture.x*levelCompressionTextureX + levelShiftTextureX;
+		RectangleVertices[k].texture.y = RectangleVertices[k].texture.y*levelCompressionTextureY + levelShiftTextureY;
+		StandardTextCoords[k].x = StandardTextCoords[k].x * levelCompressionTextureX + levelShiftTextureX;
+		StandardTextCoords[k].y = StandardTextCoords[k].y * levelCompressionTextureY + levelShiftTextureY;
+	}
+
+	D3D11_MAPPED_SUBRESOURCE mappedSubRes;
+	ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+	comDeviceContext->Map(comVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);  
+	memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));  
+	comDeviceContext->Unmap(comVertexBuffer.Get(), NULL);
+
+	//save current rectangle
+	coordsScreen = screenCoords;
+	coordsTexture = textureCoords;
+
+	comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
+
+	// clear the back buffer to a deep blue
+	float color[4] = {0.0f, 0.2f, 0.4f, 1.0f};
+	comDeviceContext->ClearRenderTargetView(comBackBuffer.Get(), color);
+
+	// select which vertex buffer to display
+    UINT stride = sizeof(VERTEX_TEXTURE);
+    UINT offset = 0;
+	comDeviceContext->IASetVertexBuffers(0, 1, comVertexBuffer.GetAddressOf(), &stride, &offset);
+
+	comDeviceContext->VSSetShader(comVertexShader.Get(), NULL, 0 );
+	comDeviceContext->PSSetShader(comPixelShader.Get(), NULL, 0);
+	comDeviceContext->PSSetShaderResources( 0, 1, comShaderViews[textureId].GetAddressOf());
+	comDeviceContext->PSSetSamplers( 0, 1, comSamplerState.GetAddressOf() );
+
+	comDeviceContext->IASetIndexBuffer(comIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+    comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // draw the vertex buffer to the back buffer
+	comDeviceContext->DrawIndexed(indexCount, 0, 0);
 }
 
 

@@ -62,6 +62,7 @@ private:
 	void InitBuffers(void);
 
 	Rect	coordsLabel, coordsIcon;
+	Rect	screenFull;
 
 	mutable int txtID;
 	bool isFirstClick;
@@ -70,4 +71,12 @@ private:
 
 	ComPtr<ID3D11Device1> comDevice;
 	ComPtr<IDXGISwapChain1> comSwapChain;
+
+	//ComPtr<ID3D11VertexShader>			fontVertexShader;    // the vertex shader
+	//ComPtr<ID3D11PixelShader>			fontPixelShader;     // the pixel shader
+	ComPtr<ID3D11Buffer>				fontVertexBuffer; 
+	ComPtr<ID3D11Buffer>				fontIndexBuffer; 
+	ComPtr<ID3D11SamplerState>			fontAtlasSampler;
+
+	ComPtr<ID3D11Buffer>				iconVertexBuffer;
 };

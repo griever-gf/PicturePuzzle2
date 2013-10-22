@@ -16,10 +16,11 @@ using namespace Windows::Foundation;
 using namespace Windows::Graphics::Display;
 using namespace Platform;
 
+MiniGamePicturePuzzle* PuzzleGame;
+
 // the class definition for the core "framework" of our app
 ref class Game sealed : public IFrameworkView
 {
-	MiniGamePicturePuzzle* PuzzleGame;
 	bool WindowClosed;
 public:
     // some functions called by Windows
@@ -64,15 +65,12 @@ public:
 
 	void PointerPressed(CoreWindow^ Window, PointerEventArgs^ Args)
     {
-		float x1 = Args->CurrentPoint->Position.X;
-		float y1 = Args->CurrentPoint->Position.Y;
-
-		std::wstringstream WStrStream;
-		WStrStream << L"x:" << x1 << L",y:" << y1;
-		Platform::String^ plStr = ref new Platform::String(WStrStream.str().c_str());
-		//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
-        MessageDialog Dialog(plStr, "Notice!");
-        Dialog.ShowAsync();
+		PuzzleGame->Click(Args->CurrentPoint->Position.X, Args->CurrentPoint->Position.Y);
+		//std::wstringstream WStrStream;
+		//WStrStream << L"x:" << x1 << L",y:" << y1;
+		//Platform::String^ plStr = ref new Platform::String(WStrStream.str().c_str());
+        //MessageDialog Dialog(plStr, "Notice!");
+        //Dialog.ShowAsync();
     }
 };
 
