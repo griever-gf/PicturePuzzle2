@@ -62,7 +62,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BasicReaderWriter.h" />
     <ClInclude Include="minigameinterface.h" />
+    <ClInclude Include="minigame_picturepuzzle.h" />
+    <ClInclude Include="WICTextureLoader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BasicReaderWriter.cpp" />
+    <ClCompile Include="minigame_picturepuzzle.cpp" />
+    <ClCompile Include="WICTextureLoader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

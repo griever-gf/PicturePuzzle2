@@ -5,7 +5,6 @@
 ////
 //// Copyright (c) Microsoft Corporation. All rights reserved
 
-#include "pch.h"
 #include "BasicReaderWriter.h"
 #include <wrl\wrappers\corewrappers.h>
 

@@ -1,4 +1,30 @@
-#include "main.h"
+#include "minigame_picturepuzzle.h"
+
+MiniGamePicturePuzzle* PuzzleGame; //global var
+
+// this is the main message handler for the program
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	std::wstringstream WStrStream;
+    // sort through and find what code to run for the message given
+    switch(message)
+    {
+        // this message is read when the window is closed
+        case WM_DESTROY:
+            {
+                // close the application entirely
+                PostQuitMessage(0);
+                return 0;
+            } break;
+			
+		case WM_LBUTTONDOWN: //on mouse click
+				PuzzleGame->Click((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
+			break;
+    }
+
+    // Handle any messages the switch statement didn't
+    return DefWindowProc (hWnd, message, wParam, lParam);
+}
 
 // the entry point for any Windows program
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -61,28 +87,4 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	delete PuzzleGame;
 	PuzzleGame = NULL;
 	return 0;
-}
-
-// this is the main message handler for the program
-LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	std::wstringstream WStrStream;
-    // sort through and find what code to run for the message given
-    switch(message)
-    {
-        // this message is read when the window is closed
-        case WM_DESTROY:
-            {
-                // close the application entirely
-                PostQuitMessage(0);
-                return 0;
-            } break;
-			
-		case WM_LBUTTONDOWN: //on mouse click
-				PuzzleGame->Click((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
-			break;
-    }
-
-    // Handle any messages the switch statement didn't
-    return DefWindowProc (hWnd, message, wParam, lParam);
 }

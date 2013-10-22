@@ -1,9 +1,4 @@
-// Include the precompiled headers
-#include "pch.h"
-#include "minigame_picturepuzzle2.h"
-
-#include <sstream>
-//#include <math.h>
+#include "minigame_picturepuzzle.h"
 
 // Use some common namespaces to simplify the code
 using namespace Windows::ApplicationModel;
@@ -39,7 +34,9 @@ public:
 	{
 		PuzzleGame = new MiniGamePicturePuzzle;
 		// Initialize and run the system object.
-		//PuzzleGame->hWnd = hWnd;
+		#if !defined(__cplusplus_winrt)
+			PuzzleGame->hWnd = hWnd;
+		#endif
 		PuzzleGame->Initialize();
 
 		// Obtain a pointer to the window
@@ -66,11 +63,6 @@ public:
 	void PointerPressed(CoreWindow^ Window, PointerEventArgs^ Args)
     {
 		PuzzleGame->Click(Args->CurrentPoint->Position.X, Args->CurrentPoint->Position.Y);
-		//std::wstringstream WStrStream;
-		//WStrStream << L"x:" << x1 << L",y:" << y1;
-		//Platform::String^ plStr = ref new Platform::String(WStrStream.str().c_str());
-        //MessageDialog Dialog(plStr, "Notice!");
-        //Dialog.ShowAsync();
     }
 };
 
