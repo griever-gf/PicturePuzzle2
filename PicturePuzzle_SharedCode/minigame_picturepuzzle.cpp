@@ -67,13 +67,13 @@ void MiniGamePicturePuzzle::ReleaseComObjects()
 		for(int i = 0; i < texturesNum; i++)
 			comShaderViews[i]->Release();
 	#else
-		comDeviceContext->ClearState();
+		/*comDeviceContext->ClearState();
 		comDeviceContext->Flush();
 		D3D11_QUERY_DESC Desc;
 		ID3D11Query* res;
 		Desc.Query = D3D11_QUERY_EVENT;
 		Desc.MiscFlags =0;
-		HRESULT h = comDevice->CreateQuery(&Desc, &res);
+		HRESULT h = comDevice->CreateQuery(&Desc, &res);*/
 		//while (S_OK != comDeviceContext->GetData(res, NULL, 0, 0))
 		//{
 		//};
@@ -105,6 +105,8 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsIcon2.left = 0.8f; coordsIcon2.right = 0.95f; coordsIcon2.top = 0.95f; coordsIcon2.bottom = 0.75f;
 
 	#if defined(__cplusplus_winrt)
+		ComPtr<IDXGIFactory2> dxgiFactory;
+	if (!isRestart){
 		// Define temporary pointers to a device and a device context
 		ComPtr<ID3D11Device> dev11;
 		ComPtr<ID3D11DeviceContext> devcon11;
@@ -128,15 +130,16 @@ void MiniGamePicturePuzzle::Initialize()
     
 		//Calling GetParent() gets us access to the factory of our adapter and of the device.
 		//It has two parameters: the type of interface we are obtaining, and a pointer to store the address in.
-		ComPtr<IDXGIFactory2> dxgiFactory;
+		
 		h = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
-
+	}
 		// set up the swap chain description
 		DXGI_SWAP_CHAIN_DESC1 tempSwapChain = {0};
 		tempSwapChain.Format = DXGI_FORMAT_B8G8R8A8_UNORM;              // the most common swap chain format
 		tempSwapChain.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;    // the recommended flip mode for WinStoreApp
 		tempSwapChain.BufferCount = 2;                                  // a front buffer and a back buffer
 		tempSwapChain.SampleDesc.Count = 1;
+
 	#else
 		DXGI_SWAP_CHAIN_DESC tempSwapChain;
 		ZeroMemory(&tempSwapChain, sizeof(DXGI_SWAP_CHAIN_DESC));
@@ -150,10 +153,10 @@ void MiniGamePicturePuzzle::Initialize()
     tempSwapChain.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;    // how the swap chain should be used
 
 	#if defined(__cplusplus_winrt)
-		CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
-
-		//if (!isRestart)
-			h = dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
+	CoreWindow^ Window;
+	if (!isRestart){
+		Window = CoreWindow::GetForCurrentThread();    // get the window pointer
+		HRESULT h = dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
 
 		//An ID3D11Texture2D is an object that stores a flat image. Like any COM object, we first define the pointer, and later a function creates the object for us.
 		// get a pointer directly to the back buffer
@@ -161,6 +164,7 @@ void MiniGamePicturePuzzle::Initialize()
 		HRESULT hh = comSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &tmpBackBuffer);
 		// create a render target pointing to the back buffer
 		hh = comDevice->CreateRenderTargetView(tmpBackBuffer.Get(), nullptr, comBackBuffer.GetAddressOf());
+	}
 	#else
 	    HRESULT hh = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION, &tempSwapChain, &comSwapChain, &comDevice, NULL, &comDeviceContext);
 		// get the address of the back buffer
@@ -179,19 +183,24 @@ void MiniGamePicturePuzzle::Initialize()
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
 	#if defined(__cplusplus_winrt)
+	if (!isRestart){
 		viewport.Width = Window->Bounds.Width;
 		viewport.Height = Window->Bounds.Height;
+		comDeviceContext->RSSetViewports(1, &viewport);
+	}
 	#else
 		RECT rect;
 		GetClientRect(hWnd, &rect);
 		viewport.Width = (float)(rect.right - rect.left);
 		viewport.Height = (float)(rect.bottom - rect.top);
+		comDeviceContext->RSSetViewports(1, &viewport);
 	#endif
-    comDeviceContext->RSSetViewports(1, &viewport);
+    
 
 	HRESULT	r1;
 	#if defined(__cplusplus_winrt) 		//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), mainTextureFileName, NULL, &comShaderViews[0], 2048);
+		//r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), 	L".\\res\\beyond.jpg", NULL, &comShaderViews[0], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\fargus_souls.jpeg", NULL, &comShaderViews[1], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\task_complete.png", NULL, &comShaderViews[2], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\icon.png", NULL, &comShaderViews[3], 2048);
