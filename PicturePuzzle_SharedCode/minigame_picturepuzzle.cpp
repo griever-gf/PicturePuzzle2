@@ -440,7 +440,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 			ofn.lpstrFile = szFile ;
 			ofn.lpstrFile[0] = '\0';
 			ofn.nMaxFile = sizeof( szFile );
-			ofn.lpstrFilter = L"All\0*.*\0Text\0*.TXT\0";
+			ofn.lpstrFilter = L"Image files\0*.bmp;*.jpg;*.jpeg;.png;.gif\0All files\0*.*\0";
 			ofn.nFilterIndex =1;
 			ofn.lpstrFileTitle = NULL ;
 			ofn.nMaxFileTitle = 0 ;
