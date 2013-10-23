@@ -14,6 +14,7 @@
 #else
 	#include <windows.h>
 	#include <windowsx.h>
+	#include <Shobjidl.h>
 	#include <d3d11.h>
 	#include <d3dx11.h>
 	#include <d3dx10.h>
@@ -94,6 +95,7 @@ private:
 	void InitPipeline(void);
 	void InitBuffers(void);
 	bool isPointInsideCircle(Rect coordsCircle, float x, float y, float screenWidth, float screenHeight);
+	void ReleaseComObjects(void);
 
 	Rect				coordsLabel, coordsIcon1, coordsIcon2;
 	VERTEX_COLOR		ColorLinesVertices[vertexCount];
@@ -103,6 +105,9 @@ private:
 	bool isFirstClick, isHardMode;
 	mutable bool flagGameFinished;
 	int previousCellNumber, currentCellNumber;
+
+	LPCWSTR mainTextureFileName;
+	WCHAR initialDirectory[MAX_PATH];;
 
 	#if defined(__cplusplus_winrt)
 		ComPtr<ID3D11Device1>		comDevice;

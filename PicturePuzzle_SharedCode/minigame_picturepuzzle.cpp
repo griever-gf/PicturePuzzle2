@@ -28,10 +28,19 @@ VECTOR_F2				StandardTextCoords[vertexCount];
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 {
-
+	#if defined(__cplusplus_winrt) 		//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
+		mainTextureFileName =  L".\\res\\beyond.jpg";
+	#else
+		mainTextureFileName =  L"..\\PicturePuzzle_Metro\\res\\beyond.jpg";
+	#endif
 }
 
 MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
+{
+	ReleaseComObjects();
+}
+
+void MiniGamePicturePuzzle::ReleaseComObjects()
 {
 	#if !defined(__cplusplus_winrt)
 		comSwapChain->SetFullscreenState(FALSE, NULL);    // switch to windowed mode
@@ -67,6 +76,9 @@ void MiniGamePicturePuzzle::Initialize()
 	previousCellNumber = 0;
 	currentCellNumber = 0;
 	txtID = 0;
+
+	GetCurrentDirectory(MAX_PATH, initialDirectory);
+
 	coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
 	coordsTexture.left = 0.0f; coordsTexture.bottom = 0.0f; coordsTexture.right = 1.0f; coordsTexture.top = 1.0f;
 
@@ -162,13 +174,13 @@ void MiniGamePicturePuzzle::Initialize()
 
 	HRESULT	r1;
 	#if defined(__cplusplus_winrt) 		//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
-		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\beyond.jpg", NULL, &comShaderViews[0], 2048);
+		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), mainTextureFileName, NULL, &comShaderViews[0], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\fargus_souls.jpeg", NULL, &comShaderViews[1], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\task_complete.png", NULL, &comShaderViews[2], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\icon.png", NULL, &comShaderViews[3], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\switch_mode_icon.png", NULL, &comShaderViews[4], 2048);
 	#else
-		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\beyond.jpg", NULL, NULL, &comShaderViews[0], NULL);
+		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, mainTextureFileName, NULL, NULL, &comShaderViews[0], NULL);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\fargus_souls.jpeg", NULL, NULL, &comShaderViews[1], NULL);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\task_complete.png", NULL, NULL, &comShaderViews[2], NULL);
 		r1 = D3DX11CreateShaderResourceViewFromFile(comDevice, L"..\\PicturePuzzle_Metro\\res\\icon.png", NULL, NULL, &comShaderViews[3], NULL);
@@ -419,7 +431,29 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 			Windows::UI::Popups::MessageDialog Dialog(plStr, "Notice!");
 			Dialog.ShowAsync();
 		#else
-			MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+			//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
+			OPENFILENAME ofn;
+			wchar_t szFile[260];
+			ZeroMemory( &ofn , sizeof( ofn));
+			ofn.lStructSize = sizeof ( ofn );
+			ofn.hwndOwner = NULL  ;
+			ofn.lpstrFile = szFile ;
+			ofn.lpstrFile[0] = '\0';
+			ofn.nMaxFile = sizeof( szFile );
+			ofn.lpstrFilter = L"All\0*.*\0Text\0*.TXT\0";
+			ofn.nFilterIndex =1;
+			ofn.lpstrFileTitle = NULL ;
+			ofn.nMaxFileTitle = 0 ;
+			ofn.lpstrInitialDir=NULL ;
+			ofn.Flags = OFN_PATHMUSTEXIST|OFN_FILEMUSTEXIST ;
+			comSwapChain->SetFullscreenState(FALSE, NULL);
+			if (GetOpenFileName( &ofn ))
+			{
+				SetCurrentDirectory(initialDirectory);
+				mainTextureFileName = szFile;
+				ReleaseComObjects();
+				this->Initialize();
+			}
 		#endif
 		return;
 	}
