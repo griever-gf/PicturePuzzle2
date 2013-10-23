@@ -10,6 +10,7 @@
 	using namespace DirectX;
 	typedef XMFLOAT3 VECTOR_F3;
 	typedef XMFLOAT2 VECTOR_F2;
+	typedef XMFLOAT4 VECTOR_F4;
 #else
 	#include <windows.h>
 	#include <windowsx.h>
@@ -23,6 +24,7 @@
 	// define the screen resolution for desktop window
 	typedef D3DXVECTOR3 VECTOR_F3;
 	typedef D3DXVECTOR2 VECTOR_F2;
+	typedef D3DXCOLOR	VECTOR_F4;
 #endif
 
 #include "minigameinterface.h"
@@ -36,6 +38,12 @@ struct VERTEX_TEXTURE
 {
 	VECTOR_F3 position;
 	VECTOR_F2 texture;
+};
+
+struct VERTEX_COLOR
+{
+	VECTOR_F3 position;
+	VECTOR_F4 color;
 };
 
 //эти переменные глобальные только потому, что требуется вызов глобальной функции Render из класса MiniGamePicturePuzzle,
@@ -58,15 +66,15 @@ static const int texturesNum	= 5;
 	extern ComPtr<ID3D11SamplerState>		comSamplerState;
 	extern ComPtr<ID3D11ShaderResourceView>	comShaderViews[texturesNum];
 #else
-	extern ID3D11DeviceContext			*comDeviceContext;           // the pointer to our Direct3D device context
-	extern ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
-	extern ID3D11Buffer					*comVertexBuffer;
-	extern ID3D11Buffer					*comIndexBuffer;
-	extern ID3D11ShaderResourceView		*comShaderViews[texturesNum];
-	extern ID3D11VertexShader			*comVertexShader;    // the vertex shader
-	extern ID3D11PixelShader			*comPixelShader;     // the pixel shader
-	extern ID3D11InputLayout			*comInputLayout;
-	extern ID3D11SamplerState			*comSamplerState;
+	extern ID3D11DeviceContext				*comDeviceContext;           // the pointer to our Direct3D device context
+	extern ID3D11RenderTargetView			*comBackBuffer;			// the pointer to our back buffer
+	extern ID3D11Buffer						*comVertexBuffer;
+	extern ID3D11Buffer						*comIndexBuffer;
+	extern ID3D11VertexShader				*comVertexShader;    // the vertex shader
+	extern ID3D11PixelShader				*comPixelShader;     // the pixel shader
+	extern ID3D11InputLayout				*comInputLayout;
+	extern ID3D11SamplerState				*comSamplerState;
+	extern ID3D11ShaderResourceView			*comShaderViews[texturesNum];
 #endif
 
 class MiniGamePicturePuzzle : public MiniGame
@@ -79,9 +87,7 @@ public:
 	bool IsComplete() const;
 	void Render() const;
 
-	#if defined(__cplusplus_winrt)
-		//Rect	screenFull;
-	#else
+	#if !defined(__cplusplus_winrt)
 		HWND hWnd;
 	#endif
 private:
@@ -89,7 +95,9 @@ private:
 	void InitBuffers(void);
 	bool isPointInsideCircle(Rect coordsCircle, float x, float y, float screenWidth, float screenHeight);
 
-	Rect	coordsLabel, coordsIcon1, coordsIcon2;
+	Rect				coordsLabel, coordsIcon1, coordsIcon2;
+	VERTEX_COLOR		ColorLinesVertices[vertexCount];
+	static const int	indexcolorCount = MiniGame::cRows*MiniGame::cColumns*5;
 	
 	mutable int txtID;
 	bool isFirstClick, isHardMode;
@@ -100,17 +108,25 @@ private:
 		ComPtr<ID3D11Device1>		comDevice;
 		ComPtr<IDXGISwapChain1>		comSwapChain;
 		ComPtr<ID3D11Buffer>		fontVertexBuffer; 
-		ComPtr<ID3D11Buffer>		fontIndexBuffer; 
-		ComPtr<ID3D11SamplerState>	fontAtlasSampler;
+		ComPtr<ID3D11Buffer>		fontIndexBuffer;
 		ComPtr<ID3D11Buffer>		iconLoadPicVertexBuffer;
 		ComPtr<ID3D11Buffer>		iconModeSwitchVertexBuffer;
+		ComPtr<ID3D11VertexShader>	colorVertexShader;
+		ComPtr<ID3D11PixelShader>	colorPixelShader;
+		ComPtr<ID3D11Buffer>		colorVertexBuffer; 
+		ComPtr<ID3D11Buffer>		colorIndexBuffer; 
+		ComPtr<ID3D11InputLayout>	colorInputLayout;    // the input layout interface
 	#else
 		ID3D11Device				*comDevice;                     // the pointer to our Direct3D device interface
 		IDXGISwapChain				*comSwapChain;             // the pointer to the swap chain interface
 		ID3D11Buffer				*fontVertexBuffer; 
 		ID3D11Buffer				*fontIndexBuffer; 
-		ID3D11SamplerState			*fontAtlasSampler;
 		ID3D11Buffer				*iconLoadPicVertexBuffer;
 		ID3D11Buffer				*iconModeSwitchVertexBuffer;
+		ID3D11VertexShader			*colorVertexShader;
+		ID3D11PixelShader			*colorPixelShader;
+		ID3D11Buffer				*colorVertexBuffer; 
+		ID3D11Buffer				*colorIndexBuffer; 
+		ID3D11InputLayout			*colorInputLayout;    // the input layout interface
 	#endif
 };

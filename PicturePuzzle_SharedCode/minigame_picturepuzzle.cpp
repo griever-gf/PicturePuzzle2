@@ -15,15 +15,15 @@ VECTOR_F2				StandardTextCoords[vertexCount];
 	ComPtr<ID3D11SamplerState>			comSamplerState;
 	ComPtr<ID3D11ShaderResourceView>	comShaderViews[texturesNum];
 #else
-	ID3D11DeviceContext			*comDeviceContext;           // the pointer to our Direct3D device context
-	ID3D11Buffer				*comVertexBuffer;
-	ID3D11ShaderResourceView	*comShaderViews[texturesNum];
-	ID3D11RenderTargetView		*comBackBuffer;			// the pointer to our back buffer
-	ID3D11VertexShader			*comVertexShader;    // the vertex shader
-	ID3D11PixelShader			*comPixelShader;     // the pixel shader
-	ID3D11Buffer				*comIndexBuffer;
-	ID3D11InputLayout			*comInputLayout;
-	ID3D11SamplerState			*comSamplerState;
+	ID3D11DeviceContext					*comDeviceContext;           // the pointer to our Direct3D device context
+	ID3D11RenderTargetView				*comBackBuffer;
+	ID3D11Buffer						*comVertexBuffer;
+	ID3D11Buffer						*comIndexBuffer;
+	ID3D11VertexShader					*comVertexShader;    // the vertex shader
+	ID3D11PixelShader					*comPixelShader;     // the pixel shader
+	ID3D11InputLayout					*comInputLayout;
+	ID3D11SamplerState					*comSamplerState;
+	ID3D11ShaderResourceView			*comShaderViews[texturesNum];
 #endif
 
 MiniGamePicturePuzzle::MiniGamePicturePuzzle()
@@ -47,6 +47,13 @@ MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
 		comDeviceContext->Release();
 		fontVertexBuffer->Release();
 		fontIndexBuffer->Release();
+		iconLoadPicVertexBuffer->Release();
+		iconModeSwitchVertexBuffer->Release();
+		colorVertexShader->Release();
+		colorPixelShader->Release();
+		colorVertexBuffer->Release();
+		colorIndexBuffer->Release();
+		colorInputLayout->Release();
 		for(int i = 0; i < texturesNum; i++)
 			comShaderViews[i]->Release();
 	#endif
@@ -148,8 +155,8 @@ void MiniGamePicturePuzzle::Initialize()
 	#else
 		RECT rect;
 		GetClientRect(hWnd, &rect);
-		viewport.Width = (rect.right - rect.left);
-		viewport.Height = (rect.bottom - rect.top);
+		viewport.Width = (float)(rect.right - rect.left);
+		viewport.Height = (float)(rect.bottom - rect.top);
 	#endif
     comDeviceContext->RSSetViewports(1, &viewport);
 
@@ -177,6 +184,7 @@ void MiniGamePicturePuzzle::InitBuffers()
 	VECTOR_F3 ScreenCoordsArray[vertexCount/4][4];
 	VECTOR_F2 TextCoordsArray[vertexCount/4][4];
 	unsigned long indices[indexCount];
+	unsigned long indices_lines[indexcolorCount];
 	for (int i = 0; i < cRows; i++)
 	{
 		for (int j = 0; j < cColumns; j++)
@@ -195,6 +203,11 @@ void MiniGamePicturePuzzle::InitBuffers()
 			indices[(i*cColumns+j)*6+3] = (i*cColumns+j)*4+3;
 			indices[(i*cColumns+j)*6+4] = (i*cColumns+j)*4+1;
 			indices[(i*cColumns+j)*6+5] = (i*cColumns+j)*4+2;
+			indices_lines[(i*cColumns+j)*5  ] = (i*cColumns+j)*4;
+			indices_lines[(i*cColumns+j)*5+1] = (i*cColumns+j)*4+1;
+			indices_lines[(i*cColumns+j)*5+2] = (i*cColumns+j)*4+2;
+			indices_lines[(i*cColumns+j)*5+3] = (i*cColumns+j)*4+3;
+			indices_lines[(i*cColumns+j)*5+4] = (i*cColumns+j)*4;
 		}
 	}
 	//save original texture coordinates
@@ -219,6 +232,8 @@ void MiniGamePicturePuzzle::InitBuffers()
 		{
 			RectangleVertices[i*4+j].position = ScreenCoordsArray[i][j];
 			RectangleVertices[i*4+j].texture = TextCoordsArray[i][j];
+			ColorLinesVertices[i*4+j].position = ScreenCoordsArray[i][j];
+			ColorLinesVertices[i*4+j].color = VECTOR_F4(0, 0, 0, 1);
 		}
 
 	D3D11_BUFFER_DESC vertexBufferDesc = {0};
@@ -243,6 +258,15 @@ void MiniGamePicturePuzzle::InitBuffers()
 	indexData.SysMemSlicePitch = 0;
 	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &comIndexBuffer);
 
+	//color lines buffers
+	vertexBufferDesc.ByteWidth = sizeof(VERTEX_COLOR) * vertexCount;
+	vertexData.pSysMem = ColorLinesVertices;
+	comDevice->CreateBuffer(&vertexBufferDesc, &vertexData, &colorVertexBuffer);
+	indexData.pSysMem = indices_lines;
+	indexBufferDesc.ByteWidth = sizeof(unsigned long) * indexcolorCount;
+	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &colorIndexBuffer);
+
+	//label buffers
 	VERTEX_TEXTURE LabelVertices[4] = { {VECTOR_F3(coordsLabel.left,coordsLabel.bottom,0.0f),VECTOR_F2(0.0f,1.0f)},
 										{VECTOR_F3(coordsLabel.left,coordsLabel.top,0.0f),VECTOR_F2(0.0f,0.0f)},
 										{VECTOR_F3(coordsLabel.right,coordsLabel.top,0.0f),VECTOR_F2(1.0f,0.0f)},
@@ -259,6 +283,7 @@ void MiniGamePicturePuzzle::InitBuffers()
 	indexData.pSysMem = label_indices;
 	comDevice->CreateBuffer(&indexBufferDesc, &indexData, &fontIndexBuffer);
 
+	//icons buffers
 	VERTEX_TEXTURE IconLoadPicVertices[4] = { {VECTOR_F3(coordsIcon1.left,coordsIcon1.bottom,0.0f),VECTOR_F2(0.0f,1.0f)},
 										{VECTOR_F3(coordsIcon1.left,coordsIcon1.top,0.0f),VECTOR_F2(0.0f,0.0f)},
 										{VECTOR_F3(coordsIcon1.right,coordsIcon1.top,0.0f),VECTOR_F2(1.0f,0.0f)},
@@ -293,9 +318,8 @@ void MiniGamePicturePuzzle::InitPipeline()
 		comDeviceContext->PSSetShader(comPixelShader.Get(), nullptr, 0);
 	#else
 		ID3D10Blob *VS, *PS;
-		HRESULT h1 = D3DX11CompileFromFile(L".\\shaders_2d.hlsl", 0, 0, "TextureVertexShader", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-		HRESULT h2 = D3DX11CompileFromFile(L".\\shaders_2d.hlsl", 0, 0, "TexturePixelShader", "ps_5_0", 0, 0, 0, &PS, 0, 0);
-
+		HRESULT h1 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\VertexShader.hlsl", 0, 0, "main", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+		HRESULT h2 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\PixelShader.hlsl", 0, 0, "main", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 		// encapsulate both shaders into shader objects
 		comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &comVertexShader);
 		comDevice->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &comPixelShader);
@@ -314,9 +338,33 @@ void MiniGamePicturePuzzle::InitPipeline()
 
 	#if defined(__cplusplus_winrt)
 		H1 = comDevice->CreateInputLayout(myInputLayout, ARRAYSIZE(myInputLayout), vertexShaderBytecode->Data, vertexShaderBytecode->Length, &comInputLayout);
-		comDeviceContext->IASetInputLayout(comInputLayout.Get());
 	#else
 	    H1 = comDevice->CreateInputLayout(myInputLayout, 2, VS->GetBufferPointer(), VS->GetBufferSize(), &comInputLayout);
+	#endif
+
+	#if defined(__cplusplus_winrt)
+		auto colorVertexShaderBytecode = reader->ReadData("VertexShader_color.cso");
+		H1= comDevice->CreateVertexShader(colorVertexShaderBytecode->Data, colorVertexShaderBytecode->Length, nullptr, &colorVertexShader);
+		auto colorPixelShaderBytecode = reader->ReadData("PixelShader_color.cso");
+		H1= comDevice->CreatePixelShader(colorPixelShaderBytecode->Data, colorPixelShaderBytecode->Length, nullptr, &colorPixelShader);
+	#else
+		ID3D10Blob *VSc, *PSc;
+		h1 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\VertexShader_color.hlsl", 0, 0, "main", "vs_5_0", 0, 0, 0, &VSc, 0, 0);
+		h2 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\PixelShader_color.hlsl", 0, 0, "main", "ps_5_0", 0, 0, 0, &PSc, 0, 0);
+		comDevice->CreateVertexShader(VSc->GetBufferPointer(), VSc->GetBufferSize(), NULL, &colorVertexShader);
+		comDevice->CreatePixelShader(PSc->GetBufferPointer(), PSc->GetBufferSize(), NULL, &colorPixelShader);
+	#endif
+
+	D3D11_INPUT_ELEMENT_DESC cInputLayout[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+
+	#if defined(__cplusplus_winrt)
+		H1 = comDevice->CreateInputLayout(cInputLayout, ARRAYSIZE(cInputLayout), colorVertexShaderBytecode->Data, colorVertexShaderBytecode->Length, &colorInputLayout);
+	#else
+		H1 = comDevice->CreateInputLayout(cInputLayout, 2, VSc->GetBufferPointer(), VSc->GetBufferSize(), &colorInputLayout);
 	#endif
 
 	D3D11_SAMPLER_DESC samplerDesc;
@@ -341,7 +389,6 @@ void MiniGamePicturePuzzle::InitPipeline()
 
 void MiniGamePicturePuzzle::Click(float x1, float y1)
 {
-	isFirstClick = !isFirstClick;
 	#if defined(__cplusplus_winrt)
 		CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
 		Rect rect;
@@ -362,7 +409,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 	float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
 	float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
 
-	if (isPointInsideCircle(coordsIcon1, x1, y1, rect.right - rect.left, rect.bottom - rect.top))
+	if (isPointInsideCircle(coordsIcon1, x1, y1, float(rect.right - rect.left), float(rect.bottom - rect.top)))
 	{
 		std::wstringstream WStrStream;
 		WStrStream << "Inside a circle!";
@@ -376,7 +423,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 		#endif
 		return;
 	}
-	if (isPointInsideCircle(coordsIcon2, x1, y1, rect.right - rect.left, rect.bottom - rect.top))
+	if (isPointInsideCircle(coordsIcon2, x1, y1, float(rect.right - rect.left), float(rect.bottom - rect.top)))
 	{
 		//isHardMode = !isHardMode;
 		return;
@@ -387,10 +434,42 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 	else
 		if (!flagGameFinished)
 		{
+			isFirstClick = !isFirstClick;
+			previousCellNumber = currentCellNumber;
+
 			int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
 			int y = (int)((y1 - firstRowCoordY ) / oneRowSize );
 
 			currentCellNumber = x + y*cColumns;
+
+			D3D11_MAPPED_SUBRESOURCE mappedSubRes;
+			ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+			#if defined(__cplusplus_winrt)
+				comDeviceContext->Map(colorVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
+			#else
+				comDeviceContext->Map(colorVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
+			#endif
+
+			if (isFirstClick)
+			{
+				ColorLinesVertices[currentCellNumber*4+0].color =  ColorLinesVertices[currentCellNumber*4+1].color = 
+				ColorLinesVertices[currentCellNumber*4+2].color =  ColorLinesVertices[currentCellNumber*4+3].color = VECTOR_F4(1, 0, 0, 1);
+			}
+			else
+			{
+				ColorLinesVertices[currentCellNumber*4+0].color =  ColorLinesVertices[currentCellNumber*4+1].color = 
+				ColorLinesVertices[currentCellNumber*4+2].color =  ColorLinesVertices[currentCellNumber*4+3].color = VECTOR_F4(1, 0, 0, 1);
+				ColorLinesVertices[previousCellNumber*4+0].color =  ColorLinesVertices[previousCellNumber*4+1].color = 
+				ColorLinesVertices[previousCellNumber*4+2].color =  ColorLinesVertices[previousCellNumber*4+3].color = VECTOR_F4(0, 0, 1, 1);
+			}
+
+			memcpy(mappedSubRes.pData, ColorLinesVertices, sizeof(ColorLinesVertices));
+
+			#if defined(__cplusplus_winrt)
+				comDeviceContext->Unmap(colorVertexBuffer.Get(), NULL);
+			#else
+				comDeviceContext->Unmap(colorVertexBuffer, NULL);
+			#endif
 
 			if ((!isFirstClick)&&(currentCellNumber!=previousCellNumber)) //if second click - swap texture coordinates for rectangle regions
 			{
@@ -426,7 +505,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 					comDeviceContext->Unmap(comVertexBuffer, NULL);
 				#endif
 			}
-			previousCellNumber = currentCellNumber;
+			//previousCellNumber = currentCellNumber;
 		}
 }
 
@@ -464,7 +543,7 @@ void MiniGamePicturePuzzle::Render() const
 		coordsTextureNew.right = fmod(coordsTextureNew.right+0.001f, 0.5f) + 0.5f;
 		coordsTextureNew.bottom = fmod(coordsTextureNew.bottom+0.001f, 0.5f);
 		coordsTextureNew.top = fmod(coordsTextureNew.top+0.001f, 0.5f) + 0.5f;
-		txtID = (txtID+1) % 20;
+		txtID = (txtID+1) % 300;
 	} else {
 		//coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
 		//coordsTexture.left = 0.0f; coordsTexture.bottom = 0.0f; coordsTexture.right = 1.0f; coordsTexture.top = 1.0f;
@@ -473,9 +552,13 @@ void MiniGamePicturePuzzle::Render() const
 		txtID = 0;
 	}
 
-	//call of global function with the same name
-	::Render(coordsScreenNew, txtID / 10, coordsTextureNew);
+	#if defined(__cplusplus_winrt)
+		comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
+	#endif
 
+	//call of global function with the same name
+	::Render(coordsScreenNew, txtID / 600, coordsTextureNew);
+		
 	//open file icon rendering
 	UINT stride = sizeof(VERTEX_TEXTURE);
 	UINT offset = 0;
@@ -511,6 +594,29 @@ void MiniGamePicturePuzzle::Render() const
 		#endif
 		comDeviceContext->DrawIndexed(6, 0, 0);
 	}
+
+	if (!flagGameFinished) 	//рамки
+	{
+		stride = sizeof(VERTEX_COLOR);
+		#if defined(__cplusplus_winrt)
+			comDeviceContext->IASetInputLayout(colorInputLayout.Get());
+			comDeviceContext->IASetVertexBuffers(0, 1, colorVertexBuffer.GetAddressOf(), &stride, &offset);
+			comDeviceContext->VSSetShader(colorVertexShader.Get(), NULL, 0 );
+			comDeviceContext->PSSetShader(colorPixelShader.Get(), NULL, 0);
+			comDeviceContext->IASetIndexBuffer(colorIndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		#else
+			comDeviceContext->IASetInputLayout(colorInputLayout);
+			comDeviceContext->IASetVertexBuffers(0, 1, &colorVertexBuffer, &stride, &offset);
+			comDeviceContext->VSSetShader(colorVertexShader, NULL, 0 );
+			comDeviceContext->PSSetShader(colorPixelShader, NULL, 0);
+			comDeviceContext->IASetIndexBuffer(colorIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		#endif
+		comDeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
+		comDeviceContext->DrawIndexed(5, 5*currentCellNumber, 0);
+		if (!isFirstClick)
+			comDeviceContext->DrawIndexed(5, 5*previousCellNumber, 0);
+	}
+
 	// switch the back buffer and the front buffer
     comSwapChain->Present(1, 0);
 }
@@ -560,7 +666,7 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
     UINT offset = 0;
 
 	#if defined(__cplusplus_winrt)
-		comDeviceContext->OMSetRenderTargets(1, comBackBuffer.GetAddressOf(), NULL);
+		comDeviceContext->IASetInputLayout(comInputLayout.Get());
 		comDeviceContext->ClearRenderTargetView(comBackBuffer.Get(), backgroundColor);
 
 		comDeviceContext->IASetVertexBuffers(0, 1, comVertexBuffer.GetAddressOf(), &stride, &offset);
@@ -581,6 +687,7 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 		comDeviceContext->IASetIndexBuffer(comIndexBuffer, DXGI_FORMAT_R32_UINT, 0);	
 	#endif
     comDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); //should switch to trianglestrip....
+
     // draw the vertex buffer to the back buffer
 	comDeviceContext->DrawIndexed(indexCount, 0, 0);
 }

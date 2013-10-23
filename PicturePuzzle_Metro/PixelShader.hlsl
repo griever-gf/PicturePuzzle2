@@ -14,7 +14,7 @@ float4 main(PixelInputType input) : SV_TARGET
 {
     float4 textureColor;
     // Sample the pixel color from the texture using the sampler at this texture coordinate location.
-	//textureColor = (0.5, 0.5, 0.5, 0.5);
+	//textureColor = (0.0, 0.2, 0.4, 1.0);
     textureColor = shaderTexture.Sample(SampleType, input.tex);
 	if(textureColor.a < 0.05) //"alpha"-channel
       discard;
