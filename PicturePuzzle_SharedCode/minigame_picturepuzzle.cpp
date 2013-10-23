@@ -103,10 +103,8 @@ void MiniGamePicturePuzzle::Initialize()
 	coordsLabel.left = -0.9f; coordsLabel.right = 0.9f; coordsLabel.top = 0.25f; coordsLabel.bottom = -0.25f;
 	coordsIcon1.left = -0.95f; coordsIcon1.right = -0.8f; coordsIcon1.top = 0.95f; coordsIcon1.bottom = 0.75f;
 	coordsIcon2.left = 0.8f; coordsIcon2.right = 0.95f; coordsIcon2.top = 0.95f; coordsIcon2.bottom = 0.75f;
-
-	#if defined(__cplusplus_winrt)
-		ComPtr<IDXGIFactory2> dxgiFactory;
 	if (!isRestart){
+	#if defined(__cplusplus_winrt)	
 		// Define temporary pointers to a device and a device context
 		ComPtr<ID3D11Device> dev11;
 		ComPtr<ID3D11DeviceContext> devcon11;
@@ -130,9 +128,8 @@ void MiniGamePicturePuzzle::Initialize()
     
 		//Calling GetParent() gets us access to the factory of our adapter and of the device.
 		//It has two parameters: the type of interface we are obtaining, and a pointer to store the address in.
-		
+		ComPtr<IDXGIFactory2> dxgiFactory;
 		h = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
-	}
 		// set up the swap chain description
 		DXGI_SWAP_CHAIN_DESC1 tempSwapChain = {0};
 		tempSwapChain.Format = DXGI_FORMAT_B8G8R8A8_UNORM;              // the most common swap chain format
@@ -153,10 +150,8 @@ void MiniGamePicturePuzzle::Initialize()
     tempSwapChain.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;    // how the swap chain should be used
 
 	#if defined(__cplusplus_winrt)
-	CoreWindow^ Window;
-	if (!isRestart){
-		Window = CoreWindow::GetForCurrentThread();    // get the window pointer
-		HRESULT h = dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
+		CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
+		h = dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
 
 		//An ID3D11Texture2D is an object that stores a flat image. Like any COM object, we first define the pointer, and later a function creates the object for us.
 		// get a pointer directly to the back buffer
@@ -164,7 +159,6 @@ void MiniGamePicturePuzzle::Initialize()
 		HRESULT hh = comSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &tmpBackBuffer);
 		// create a render target pointing to the back buffer
 		hh = comDevice->CreateRenderTargetView(tmpBackBuffer.Get(), nullptr, comBackBuffer.GetAddressOf());
-	}
 	#else
 	    HRESULT hh = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION, &tempSwapChain, &comSwapChain, &comDevice, NULL, &comDeviceContext);
 		// get the address of the back buffer
@@ -183,11 +177,9 @@ void MiniGamePicturePuzzle::Initialize()
     viewport.TopLeftX = 0;
     viewport.TopLeftY = 0;
 	#if defined(__cplusplus_winrt)
-	if (!isRestart){
 		viewport.Width = Window->Bounds.Width;
 		viewport.Height = Window->Bounds.Height;
 		comDeviceContext->RSSetViewports(1, &viewport);
-	}
 	#else
 		RECT rect;
 		GetClientRect(hWnd, &rect);
@@ -195,7 +187,7 @@ void MiniGamePicturePuzzle::Initialize()
 		viewport.Height = (float)(rect.bottom - rect.top);
 		comDeviceContext->RSSetViewports(1, &viewport);
 	#endif
-    
+	}
 
 	HRESULT	r1;
 	#if defined(__cplusplus_winrt) 		//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
