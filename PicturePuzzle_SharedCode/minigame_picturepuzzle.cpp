@@ -318,8 +318,8 @@ void MiniGamePicturePuzzle::InitPipeline()
 		comDeviceContext->PSSetShader(comPixelShader.Get(), nullptr, 0);
 	#else
 		ID3D10Blob *VS, *PS;
-		HRESULT h1 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\VertexShader.hlsl", 0, 0, "main", "vs_5_0", 0, 0, 0, &VS, 0, 0);
-		HRESULT h2 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\PixelShader.hlsl", 0, 0, "main", "ps_5_0", 0, 0, 0, &PS, 0, 0);
+		HRESULT h1 = D3DX11CompileFromFile(L"..\\PicturePuzzle_SharedCode\\shaders\\VertexShader.hlsl", 0, 0, "main", "vs_5_0", 0, 0, 0, &VS, 0, 0);
+		HRESULT h2 = D3DX11CompileFromFile(L"..\\PicturePuzzle_SharedCode\\shaders\\PixelShader.hlsl", 0, 0, "main", "ps_5_0", 0, 0, 0, &PS, 0, 0);
 		// encapsulate both shaders into shader objects
 		comDevice->CreateVertexShader(VS->GetBufferPointer(), VS->GetBufferSize(), NULL, &comVertexShader);
 		comDevice->CreatePixelShader(PS->GetBufferPointer(), PS->GetBufferSize(), NULL, &comPixelShader);
@@ -349,8 +349,8 @@ void MiniGamePicturePuzzle::InitPipeline()
 		H1= comDevice->CreatePixelShader(colorPixelShaderBytecode->Data, colorPixelShaderBytecode->Length, nullptr, &colorPixelShader);
 	#else
 		ID3D10Blob *VSc, *PSc;
-		h1 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\VertexShader_color.hlsl", 0, 0, "main", "vs_5_0", 0, 0, 0, &VSc, 0, 0);
-		h2 = D3DX11CompileFromFile(L"..\\PicturePuzzle_Metro\\PixelShader_color.hlsl", 0, 0, "main", "ps_5_0", 0, 0, 0, &PSc, 0, 0);
+		h1 = D3DX11CompileFromFile(L"..\\PicturePuzzle_SharedCode\\shaders\\VertexShader_color.hlsl", 0, 0, "main", "vs_5_0", 0, 0, 0, &VSc, 0, 0);
+		h2 = D3DX11CompileFromFile(L"..\\PicturePuzzle_SharedCode\\shaders\\PixelShader_color.hlsl", 0, 0, "main", "ps_5_0", 0, 0, 0, &PSc, 0, 0);
 		comDevice->CreateVertexShader(VSc->GetBufferPointer(), VSc->GetBufferSize(), NULL, &colorVertexShader);
 		comDevice->CreatePixelShader(PSc->GetBufferPointer(), PSc->GetBufferSize(), NULL, &colorPixelShader);
 	#endif
