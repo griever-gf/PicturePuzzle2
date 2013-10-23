@@ -23,25 +23,14 @@
         <Extension Category="windows.fileOpenPicker">
           <FileOpenPicker>
             <SupportedFileTypes>
-              <SupportsAnyFileType />
-            </SupportedFileTypes>
-          </FileOpenPicker>
-        </Extension>
-        <Extension Category="windows.fileTypeAssociation">
-          <FileTypeAssociation Name="images">
-            <SupportedFileTypes>
               <FileType>.jpg</FileType>
-              <FileType>.png</FileType>
               <FileType>.jpeg</FileType>
-              <FileType>.bmp</FileType>
+              <FileType>.png</FileType>
               <FileType>.gif</FileType>
             </SupportedFileTypes>
-          </FileTypeAssociation>
+          </FileOpenPicker>
         </Extension>
       </Extensions>
     </Application>
   </Applications>
-  <Capabilities>
-    <Capability Name="documentsLibrary" />
-  </Capabilities>
 </Package>

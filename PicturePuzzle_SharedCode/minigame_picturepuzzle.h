@@ -2,12 +2,18 @@
 	#include <wrl/client.h>
 	#include <d3d11_1.h>
 	#include <DirectXMath.h>
+	#include <memory>
+	#include <ppltasks.h> //async tasks, for file open picker
 	#include "BasicReaderWriter.h" //compiled shaders (*.cso) loading
 	#include "WICTextureLoader.h" //image to texture converting (because D3DX11CreateShaderResourceViewFromFile is deprecated for Windows Store:( )
 	#pragma once
 	using namespace Microsoft::WRL;
 	using namespace Windows::UI::Core;
 	using namespace DirectX;
+	using namespace Windows::Storage;
+	using namespace Windows::Storage::Streams;
+	using namespace Windows::Storage::Pickers;
+	using namespace concurrency; //Include the namespace for the parallel processing library (PPL)
 	typedef XMFLOAT3 VECTOR_F3;
 	typedef XMFLOAT2 VECTOR_F2;
 	typedef XMFLOAT4 VECTOR_F4;
@@ -102,7 +108,7 @@ private:
 	static const int	indexcolorCount = MiniGame::cRows*MiniGame::cColumns*5;
 	
 	mutable int txtID;
-	bool isFirstClick, isHardMode;
+	bool isFirstClick, isHardMode, isRestart;
 	mutable bool flagGameFinished;
 	int previousCellNumber, currentCellNumber;
 

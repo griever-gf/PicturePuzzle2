@@ -33,6 +33,7 @@ MiniGamePicturePuzzle::MiniGamePicturePuzzle()
 	#else
 		mainTextureFileName =  L"..\\PicturePuzzle_Metro\\res\\beyond.jpg";
 	#endif
+	isRestart = false;
 }
 
 MiniGamePicturePuzzle::~MiniGamePicturePuzzle()
@@ -65,6 +66,18 @@ void MiniGamePicturePuzzle::ReleaseComObjects()
 		colorInputLayout->Release();
 		for(int i = 0; i < texturesNum; i++)
 			comShaderViews[i]->Release();
+	#else
+		comDeviceContext->ClearState();
+		comDeviceContext->Flush();
+		D3D11_QUERY_DESC Desc;
+		ID3D11Query* res;
+		Desc.Query = D3D11_QUERY_EVENT;
+		Desc.MiscFlags =0;
+		HRESULT h = comDevice->CreateQuery(&Desc, &res);
+		//while (S_OK != comDeviceContext->GetData(res, NULL, 0, 0))
+		//{
+		//};
+		//int x = 1;
 	#endif
 }
 
@@ -77,7 +90,9 @@ void MiniGamePicturePuzzle::Initialize()
 	currentCellNumber = 0;
 	txtID = 0;
 
-	GetCurrentDirectory(MAX_PATH, initialDirectory);
+	#if !defined(__cplusplus_winrt)
+		GetCurrentDirectory(MAX_PATH, initialDirectory);
+	#endif
 
 	coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
 	coordsTexture.left = 0.0f; coordsTexture.bottom = 0.0f; coordsTexture.right = 1.0f; coordsTexture.top = 1.0f;
@@ -109,12 +124,12 @@ void MiniGamePicturePuzzle::Initialize()
 		//This could simply be described as the virtutal representation of the video card
 		//(assuming the video card is separate, and not built into the motherboard).
 		ComPtr<IDXGIAdapter> dxgiAdapter;
-		dxgiDevice->GetAdapter(&dxgiAdapter);
+		h = dxgiDevice->GetAdapter(&dxgiAdapter);
     
 		//Calling GetParent() gets us access to the factory of our adapter and of the device.
 		//It has two parameters: the type of interface we are obtaining, and a pointer to store the address in.
 		ComPtr<IDXGIFactory2> dxgiFactory;
-		dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
+		h = dxgiAdapter->GetParent(__uuidof(IDXGIFactory2), &dxgiFactory);
 
 		// set up the swap chain description
 		DXGI_SWAP_CHAIN_DESC1 tempSwapChain = {0};
@@ -136,14 +151,16 @@ void MiniGamePicturePuzzle::Initialize()
 
 	#if defined(__cplusplus_winrt)
 		CoreWindow^ Window = CoreWindow::GetForCurrentThread();    // get the window pointer
-		dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
+
+		//if (!isRestart)
+			h = dxgiFactory->CreateSwapChainForCoreWindow(comDevice.Get(), reinterpret_cast<IUnknown*>(Window), &tempSwapChain, nullptr, &comSwapChain);
 
 		//An ID3D11Texture2D is an object that stores a flat image. Like any COM object, we first define the pointer, and later a function creates the object for us.
 		// get a pointer directly to the back buffer
 		ComPtr<ID3D11Texture2D> tmpBackBuffer;
-		comSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &tmpBackBuffer);
+		HRESULT hh = comSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), &tmpBackBuffer);
 		// create a render target pointing to the back buffer
-		HRESULT hh = comDevice->CreateRenderTargetView(tmpBackBuffer.Get(), nullptr, comBackBuffer.GetAddressOf());
+		hh = comDevice->CreateRenderTargetView(tmpBackBuffer.Get(), nullptr, comBackBuffer.GetAddressOf());
 	#else
 	    HRESULT hh = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL, D3D11_SDK_VERSION, &tempSwapChain, &comSwapChain, &comDevice, NULL, &comDeviceContext);
 		// get the address of the back buffer
@@ -423,13 +440,41 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 
 	if (isPointInsideCircle(coordsIcon1, x1, y1, float(rect.right - rect.left), float(rect.bottom - rect.top)))
 	{
+		isRestart = true;
 		std::wstringstream WStrStream;
-		WStrStream << "Inside a circle!";
+		//WStrStream << "Inside a circle!";
 		//WStrStream << "x:" << x << ",y:" << y << " ,cellnum:" << currentCellNumber;
 		#if defined(__cplusplus_winrt)
-			Platform::String^ plStr = ref new Platform::String(WStrStream.str().c_str());
-			Windows::UI::Popups::MessageDialog Dialog(plStr, "Notice!");
-			Dialog.ShowAsync();
+			//Platform::String^ plStr = ref new Platform::String(WStrStream.str().c_str());
+			//Windows::UI::Popups::MessageDialog Dialog(plStr, "Notice!");
+			//Dialog.ShowAsync();
+
+			FileOpenPicker^ openPicker = ref new FileOpenPicker(); 
+			openPicker->ViewMode = PickerViewMode::Thumbnail; 
+			openPicker->SuggestedStartLocation = PickerLocationId::PicturesLibrary; 
+			openPicker->FileTypeFilter->Append(".jpg");
+			openPicker->FileTypeFilter->Append(".jpeg");
+			openPicker->FileTypeFilter->Append(".bmp");
+			openPicker->FileTypeFilter->Append(".png");
+			openPicker->FileTypeFilter->Append(".gif");
+   
+			create_task(openPicker->PickSingleFileAsync()).then([this](StorageFile^ file)
+			{
+				if (file) 
+				{ 
+					StorageFolder^ tempFolder = ApplicationData::Current->TemporaryFolder;
+					file->CopyAsync(tempFolder, file->Name);
+
+					mainTextureFileName  = Platform::String::Concat(Platform::String::Concat(tempFolder->Path, "\\"), file->Name)->Data();
+
+					ReleaseComObjects();
+					this->Initialize();
+
+					//Platform::String^ plStr = ref new Platform::String(mainTextureFileName);
+					//Windows::UI::Popups::MessageDialog Dialog(plStr, "Notice!");
+					//Dialog.ShowAsync();
+				}
+			});
 		#else
 			//MessageBox(hWnd,WStrStream.str().c_str(),L"Element coords",MB_OK);
 			OPENFILENAME ofn;
