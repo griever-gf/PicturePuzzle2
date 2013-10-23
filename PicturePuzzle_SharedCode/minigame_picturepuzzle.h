@@ -59,6 +59,7 @@ static const int				vertexCount = MiniGame::cRows*MiniGame::cColumns*4; //may be
 static const int				indexCount = MiniGame::cRows*MiniGame::cColumns*6;
 extern VERTEX_TEXTURE			RectangleVertices[vertexCount];
 extern VECTOR_F2				StandardTextCoords[vertexCount];
+extern VERTEX_COLOR				ColorLinesVertices[vertexCount];
 extern Rect						coordsScreen, coordsTexture;
 static const int texturesNum	= 5;
 
@@ -71,6 +72,7 @@ static const int texturesNum	= 5;
 	extern ComPtr<ID3D11PixelShader>		comPixelShader;
 	extern ComPtr<ID3D11InputLayout>		comInputLayout;    // the input layout interface
 	extern ComPtr<ID3D11SamplerState>		comSamplerState;
+	extern ComPtr<ID3D11Buffer>				colorVertexBuffer;
 	extern ComPtr<ID3D11ShaderResourceView>	comShaderViews[texturesNum];
 #else
 	extern ID3D11DeviceContext				*comDeviceContext;           // the pointer to our Direct3D device context
@@ -81,6 +83,7 @@ static const int texturesNum	= 5;
 	extern ID3D11PixelShader				*comPixelShader;     // the pixel shader
 	extern ID3D11InputLayout				*comInputLayout;
 	extern ID3D11SamplerState				*comSamplerState;
+	extern ID3D11Buffer						*colorVertexBuffer; 
 	extern ID3D11ShaderResourceView			*comShaderViews[texturesNum];
 #endif
 
@@ -104,11 +107,10 @@ private:
 	void ReleaseComObjects(void);
 
 	Rect				coordsLabel, coordsIcon1, coordsIcon2;
-	VERTEX_COLOR		ColorLinesVertices[vertexCount];
 	static const int	indexcolorCount = MiniGame::cRows*MiniGame::cColumns*5;
 	
 	mutable int txtID;
-	bool isFirstClick, isHardMode, isRestart;
+	bool isFirstClick, isHardMode, isRestart, isJustStarted;
 	mutable bool flagGameFinished;
 	int previousCellNumber, currentCellNumber;
 
@@ -124,7 +126,6 @@ private:
 		ComPtr<ID3D11Buffer>		iconModeSwitchVertexBuffer;
 		ComPtr<ID3D11VertexShader>	colorVertexShader;
 		ComPtr<ID3D11PixelShader>	colorPixelShader;
-		ComPtr<ID3D11Buffer>		colorVertexBuffer; 
 		ComPtr<ID3D11Buffer>		colorIndexBuffer; 
 		ComPtr<ID3D11InputLayout>	colorInputLayout;    // the input layout interface
 	#else
@@ -136,7 +137,6 @@ private:
 		ID3D11Buffer				*iconModeSwitchVertexBuffer;
 		ID3D11VertexShader			*colorVertexShader;
 		ID3D11PixelShader			*colorPixelShader;
-		ID3D11Buffer				*colorVertexBuffer; 
 		ID3D11Buffer				*colorIndexBuffer; 
 		ID3D11InputLayout			*colorInputLayout;    // the input layout interface
 	#endif

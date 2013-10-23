@@ -1,9 +1,10 @@
 #include "minigame_picturepuzzle.h"
 
-Rect					coordsScreen,	coordsTexture;
-Rect					coordsScreenNew, coordsTextureNew;
-VERTEX_TEXTURE			RectangleVertices[vertexCount];
-VECTOR_F2				StandardTextCoords[vertexCount];
+Rect						coordsScreen,	coordsTexture;
+Rect						coordsScreenNew, coordsTextureNew;
+VERTEX_TEXTURE				RectangleVertices[vertexCount];
+VECTOR_F2					StandardTextCoords[vertexCount];
+VERTEX_COLOR				ColorLinesVertices[vertexCount];
 #if defined(__cplusplus_winrt)
 	ComPtr<ID3D11DeviceContext1>		comDeviceContext;
 	ComPtr<ID3D11RenderTargetView>		comBackBuffer;
@@ -13,6 +14,7 @@ VECTOR_F2				StandardTextCoords[vertexCount];
 	ComPtr<ID3D11PixelShader>			comPixelShader;
 	ComPtr<ID3D11InputLayout>			comInputLayout; 
 	ComPtr<ID3D11SamplerState>			comSamplerState;
+	ComPtr<ID3D11Buffer>				colorVertexBuffer;
 	ComPtr<ID3D11ShaderResourceView>	comShaderViews[texturesNum];
 #else
 	ID3D11DeviceContext					*comDeviceContext;           // the pointer to our Direct3D device context
@@ -23,6 +25,7 @@ VECTOR_F2				StandardTextCoords[vertexCount];
 	ID3D11PixelShader					*comPixelShader;     // the pixel shader
 	ID3D11InputLayout					*comInputLayout;
 	ID3D11SamplerState					*comSamplerState;
+	ID3D11Buffer						*colorVertexBuffer; 
 	ID3D11ShaderResourceView			*comShaderViews[texturesNum];
 #endif
 
@@ -89,7 +92,7 @@ void MiniGamePicturePuzzle::Initialize()
 	previousCellNumber = 0;
 	currentCellNumber = 0;
 	txtID = 0;
-
+	isJustStarted = true;
 	#if !defined(__cplusplus_winrt)
 		GetCurrentDirectory(MAX_PATH, initialDirectory);
 	#endif
@@ -192,7 +195,6 @@ void MiniGamePicturePuzzle::Initialize()
 	HRESULT	r1;
 	#if defined(__cplusplus_winrt) 		//can't use D3DX11CreateShaderResourceViewFromFile for WinStore
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), mainTextureFileName, NULL, &comShaderViews[0], 2048);
-		//r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), 	L".\\res\\beyond.jpg", NULL, &comShaderViews[0], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\fargus_souls.jpeg", NULL, &comShaderViews[1], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\task_complete.png", NULL, &comShaderViews[2], 2048);
 		r1 = CreateWICTextureFromFile(comDevice.Get(), comDeviceContext.Get(), L".\\res\\icon.png", NULL, &comShaderViews[3], 2048);
@@ -505,7 +507,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 	}
 	if (isPointInsideCircle(coordsIcon2, x1, y1, float(rect.right - rect.left), float(rect.bottom - rect.top)))
 	{
-		//isHardMode = !isHardMode;
+		isHardMode = !isHardMode;
 		return;
 	}
 	//если кликнули не в прямоугольник - выходим
@@ -515,6 +517,7 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 		if (!flagGameFinished)
 		{
 			isFirstClick = !isFirstClick;
+			isJustStarted = false;
 			previousCellNumber = currentCellNumber;
 
 			int x = (int)((x1 - firstColumnCoordX) / oneColumnSize );
@@ -675,7 +678,7 @@ void MiniGamePicturePuzzle::Render() const
 		comDeviceContext->DrawIndexed(6, 0, 0);
 	}
 
-	if (!flagGameFinished) 	//рамки
+	if ((!flagGameFinished)&&(!isJustStarted)) 	//рамки
 	{
 		stride = sizeof(VERTEX_COLOR);
 		#if defined(__cplusplus_winrt)
@@ -721,20 +724,27 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 		RectangleVertices[k].texture.y = RectangleVertices[k].texture.y*levelCompressionTextureY + levelShiftTextureY;
 		StandardTextCoords[k].x = StandardTextCoords[k].x * levelCompressionTextureX + levelShiftTextureX;
 		StandardTextCoords[k].y = StandardTextCoords[k].y * levelCompressionTextureY + levelShiftTextureY;
+		ColorLinesVertices[k].position.x = (ColorLinesVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
+		ColorLinesVertices[k].position.y = (ColorLinesVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
 	}
 
-	D3D11_MAPPED_SUBRESOURCE mappedSubRes;
-	ZeroMemory( &mappedSubRes, sizeof(D3D11_MAPPED_SUBRESOURCE) );
+	D3D11_MAPPED_SUBRESOURCE mappedSubRes1, mappedSubRes2;
+	ZeroMemory( &mappedSubRes1, sizeof(D3D11_MAPPED_SUBRESOURCE) ); ZeroMemory( &mappedSubRes2, sizeof(D3D11_MAPPED_SUBRESOURCE) );
 	#if defined(__cplusplus_winrt)
-		comDeviceContext->Map(comVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes); 
+		comDeviceContext->Map(comVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes1);
+		comDeviceContext->Map(colorVertexBuffer.Get(), NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes2); 
 	#else
-		comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes);
+		comDeviceContext->Map(comVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes1);
+		comDeviceContext->Map(colorVertexBuffer, NULL, D3D11_MAP_WRITE_DISCARD, NULL, &mappedSubRes2);
 	#endif
-	memcpy(mappedSubRes.pData, RectangleVertices, sizeof(RectangleVertices));
+	memcpy(mappedSubRes1.pData, RectangleVertices, sizeof(RectangleVertices));
+	memcpy(mappedSubRes2.pData, ColorLinesVertices, sizeof(ColorLinesVertices));
 	#if defined(__cplusplus_winrt)
 		comDeviceContext->Unmap(comVertexBuffer.Get(), NULL);
+		comDeviceContext->Unmap(colorVertexBuffer.Get(), NULL);
 	#else
 		comDeviceContext->Unmap(comVertexBuffer, NULL);
+		comDeviceContext->Unmap(colorVertexBuffer, NULL);
 	#endif
 
 	//save current rectangle
