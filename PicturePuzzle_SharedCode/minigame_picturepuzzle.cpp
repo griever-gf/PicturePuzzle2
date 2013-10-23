@@ -95,7 +95,10 @@ void MiniGamePicturePuzzle::Initialize()
 	isJustStarted = true;
 	#if !defined(__cplusplus_winrt)
 		GetCurrentDirectory(MAX_PATH, initialDirectory);
+	#else
+		ZeroMemory(comShaderViews[0].GetAddressOf(), sizeof(ID3D11ShaderResourceView));
 	#endif
+
 
 	coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
 	coordsTexture.left = 0.0f; coordsTexture.bottom = 0.0f; coordsTexture.right = 1.0f; coordsTexture.top = 1.0f;
@@ -182,14 +185,13 @@ void MiniGamePicturePuzzle::Initialize()
 	#if defined(__cplusplus_winrt)
 		viewport.Width = Window->Bounds.Width;
 		viewport.Height = Window->Bounds.Height;
-		comDeviceContext->RSSetViewports(1, &viewport);
 	#else
 		RECT rect;
 		GetClientRect(hWnd, &rect);
 		viewport.Width = (float)(rect.right - rect.left);
 		viewport.Height = (float)(rect.bottom - rect.top);
-		comDeviceContext->RSSetViewports(1, &viewport);
 	#endif
+	comDeviceContext->RSSetViewports(1, &viewport);
 	}
 
 	HRESULT	r1;
@@ -438,8 +440,8 @@ void MiniGamePicturePuzzle::Click(float x1, float y1)
 
 	float oneColumnSize = width/cColumns;
 	float oneRowSize = height/cRows;
-	float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+coordsScreen.left)/2;
-	float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-coordsScreen.top)/2;
+	float firstColumnCoordX = ((float)(rect.right - rect.left))*(1.0f+RectangleVertices[1].position.x)*0.5f;
+	float firstRowCoordY = ((float)(rect.bottom - rect.top))*(1.0f-RectangleVertices[1].position.y)*0.5f;
 
 	if (isPointInsideCircle(coordsIcon1, x1, y1, float(rect.right - rect.left), float(rect.bottom - rect.top)))
 	{
@@ -618,14 +620,14 @@ bool MiniGamePicturePuzzle::IsComplete() const
 void MiniGamePicturePuzzle::Render() const
 {
 	if (isHardMode){
-		coordsScreenNew.left = fmod(coordsScreenNew.left+0.001f+1, 1.0f) - 1;
-		coordsScreenNew.right = fmod(coordsScreenNew.right+0.001f+1, 1.0f);
-		coordsScreenNew.top = fmod(coordsScreenNew.top+0.001f+1, 1.0f);
-		coordsScreenNew.bottom = fmod(coordsScreenNew.bottom+0.001f+1, 1.0f) - 1;
-		coordsTextureNew.left = fmod(coordsTextureNew.left+0.001f, 0.5f);
-		coordsTextureNew.right = fmod(coordsTextureNew.right+0.001f, 0.5f) + 0.5f;
-		coordsTextureNew.bottom = fmod(coordsTextureNew.bottom+0.001f, 0.5f);
-		coordsTextureNew.top = fmod(coordsTextureNew.top+0.001f, 0.5f) + 0.5f;
+		coordsScreenNew.left =		fmod(coordsScreenNew.left	+0.001f+1, 1.0f) - 1;
+		coordsScreenNew.right =		fmod(coordsScreenNew.right	+0.001f+1, 1.0f);
+		coordsScreenNew.top =		fmod(coordsScreenNew.top	+0.001f+1, 1.0f);
+		coordsScreenNew.bottom =	fmod(coordsScreenNew.bottom +0.001f+1, 1.0f) - 1;
+		coordsTextureNew.left =		fmod(coordsTextureNew.left  +0.001f, 0.5f);
+		coordsTextureNew.right =	fmod(coordsTextureNew.right +0.001f, 0.5f) + 0.5f;
+		coordsTextureNew.bottom =	fmod(coordsTextureNew.bottom+0.001f, 0.5f);
+		coordsTextureNew.top =		fmod(coordsTextureNew.top	+0.001f, 0.5f) + 0.5f;
 		txtID = (txtID+1) % 300;
 	} else {
 		//coordsScreen.left = -1.0f; coordsScreen.bottom = -1.0f; coordsScreen.right = 1.0f; coordsScreen.top = 1.0f;
@@ -718,14 +720,20 @@ void Render(const Rect& screenCoords, int textureId, const Rect& textureCoords)
 
 	for (int k = 0; k < vertexCount; k++)
 	{
-		RectangleVertices[k].position.x = (RectangleVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
-		RectangleVertices[k].position.y = (RectangleVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
-		RectangleVertices[k].texture.x = RectangleVertices[k].texture.x*levelCompressionTextureX + levelShiftTextureX;
-		RectangleVertices[k].texture.y = RectangleVertices[k].texture.y*levelCompressionTextureY + levelShiftTextureY;
-		StandardTextCoords[k].x = StandardTextCoords[k].x * levelCompressionTextureX + levelShiftTextureX;
-		StandardTextCoords[k].y = StandardTextCoords[k].y * levelCompressionTextureY + levelShiftTextureY;
-		ColorLinesVertices[k].position.x = (ColorLinesVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
-		ColorLinesVertices[k].position.y = (ColorLinesVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
+		//RectangleVertices[k].position.x = (RectangleVertices[k].position.x+1)*levelCompressionCoordX - 1 + levelShiftCoordX;
+		//RectangleVertices[k].position.y = (RectangleVertices[k].position.y+1)*levelCompressionCoordY - 1 + levelShiftCoordY;
+		RectangleVertices[k].position.x = (RectangleVertices[k].position.x+ levelShiftCoordX) *levelCompressionCoordX;
+		RectangleVertices[k].position.y = (RectangleVertices[k].position.y+ levelShiftCoordY) *levelCompressionCoordY;
+		//RectangleVertices[k].texture.x = RectangleVertices[k].texture.x*levelCompressionTextureX + levelShiftTextureX;
+		//RectangleVertices[k].texture.y = RectangleVertices[k].texture.y*levelCompressionTextureY + levelShiftTextureY;
+		RectangleVertices[k].texture.x = (RectangleVertices[k].texture.x + levelShiftTextureX)*levelCompressionTextureX;
+		RectangleVertices[k].texture.y = (RectangleVertices[k].texture.y + levelShiftTextureY)*levelCompressionTextureY;
+		//StandardTextCoords[k].x = StandardTextCoords[k].x * levelCompressionTextureX + levelShiftTextureX;
+		//StandardTextCoords[k].y = StandardTextCoords[k].y * levelCompressionTextureY + levelShiftTextureY;
+		StandardTextCoords[k].x = (StandardTextCoords[k].x + levelShiftTextureX)* levelCompressionTextureX ;
+		StandardTextCoords[k].y = (StandardTextCoords[k].y + levelShiftTextureY)* levelCompressionTextureY;
+		ColorLinesVertices[k].position.x = (ColorLinesVertices[k].position.x+ levelShiftCoordX) *levelCompressionCoordX;
+		ColorLinesVertices[k].position.y = (ColorLinesVertices[k].position.y+ levelShiftCoordY) *levelCompressionCoordY;
 	}
 
 	D3D11_MAPPED_SUBRESOURCE mappedSubRes1, mappedSubRes2;
